@@ -1,8 +1,9 @@
 package com.example.chatapp;
 
 public class Configs {
-    private static String socketURL = "http://10.2.60.82:8000/";
-    private static String serverURL = "http://10.2.60.82:8001";
+    private static String IP = "192.168.43.147";
+    private static String socketURL = "http://"+IP+":8000/";
+    private static String serverURL = "http://"+IP+":8001";
     private static String signupURL = serverURL + "/signup";
     private static String signinURL = serverURL + "/signin";
     private static String userURL   = serverURL + "/user";

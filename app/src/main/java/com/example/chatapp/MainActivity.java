@@ -8,6 +8,7 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
@@ -115,6 +116,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextChange(String newText) {
                 return onQueryTextSubmit(newText);
+            }
+        });
+
+        MainBinding.buttonAccount.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(MainActivity.this, AccountActivity.class);
+                startActivity(i);
             }
         });
 
