@@ -16,5 +16,5 @@ et executer ces commande:
     > démarre  le serveur
 
 ## Java/AndroidStudio 
-apres sa dans android studio il faut configuré votre ip dans la classe Configs 
+apres sa dans android studio il faut configuré votre ip dans la classe Configs   
     > Attribut IP
