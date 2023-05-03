@@ -9,7 +9,7 @@ et executer ces commande:
     ```
     npm install
     ```  
-    > sert a installé les dependeces du serveur
+    > sert a installé les dependeces du serveur  
     ```
     npm run server 
     ```  
