@@ -89,7 +89,7 @@ public class PeopleFragment extends Fragment {
                     else{
                         JSONArray resArr = res.getJSONArray("friends");
                         if(resArr.length()<1) {
-                            Toast.makeText(getActivity(), "0 messages", Toast.LENGTH_LONG).show();
+                            Toast.makeText(getActivity(), "0 friends", Toast.LENGTH_LONG).show();
                             return;
                         }
                         for (int i = 0; i < resArr.length(); i++) {

@@ -73,6 +73,9 @@ public class MainActivity extends AppCompatActivity {
                     case R.id.peopleFragment:
                         navController.navigate(R.id.peopleFragment);
                         return true;
+                    case R.id.searchFragment:
+                        navController.navigate(R.id.searchFragment);
+                        return true;
                 }
 
                 return false;
@@ -109,7 +112,10 @@ public class MainActivity extends AppCompatActivity {
                     //MainBinding.list.setAdapter(adapter);
                     return false;
                 }
-                search(query, MainBinding);
+                else{
+                    SearchFragment.setQuery(query);
+                    MainBinding.navControllerMain.setSelectedItemId(R.id.searchFragment);
+                }
                 return true;
             }
 
@@ -122,8 +128,9 @@ public class MainActivity extends AppCompatActivity {
         MainBinding.buttonAccount.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent i = new Intent(MainActivity.this, AccountActivity.class);
-                startActivity(i);
+                Intent account = new Intent(MainActivity.this, AccountActivity.class);
+                account.putExtra("userID", user.getUserID());
+                startActivity(account);
             }
         });
 
@@ -186,64 +193,7 @@ public class MainActivity extends AppCompatActivity {
     public void socketListenersOff(){
         socket.off("chat message");
     }
-    private void search(String query, ActivityMainBinding mainBinding) {
-        MainBinding.progressBar.setVisibility(View.VISIBLE);
 
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getSearchURL(), new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                MainBinding.progressBar.setVisibility(View.GONE);
-                try {
-                    JSONObject res = new JSONObject(response);
-
-                    if(res.has("error")){
-                        Toast.makeText(getApplicationContext(), "error: "+ res.get("error"), Toast.LENGTH_LONG).show();
-                    }
-                    else{
-
-                        JSONArray resArr = res.getJSONArray("results");
-                        Toast.makeText(MainActivity.this, "Results: \n"+resArr.toString(), Toast.LENGTH_LONG).show();
-                        /*ArrayList<PersonItem> l = new ArrayList<PersonItem>();
-                        for (int i = 0; i < resArr.length(); i++) {
-                            JSONObject r = resArr.getJSONObject(i);
-
-                            PersonItem item = new PersonItem();
-                            item.setUserID(r.getInt("userID"));
-                            item.setUserEmail(r.getString("userEmail"));
-                            item.setUserName(r.getString("userName"));
-
-                            l.add(item);
-                        }
-                        PersonItemAdapter adapter = new PersonItemAdapter(l);
-                        MainBinding.list.setAdapter(adapter);*/
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    Toast.makeText(getApplicationContext(), "Response error: "+ e.getMessage(), Toast.LENGTH_LONG).show();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                MainBinding.progressBar.setVisibility(View.GONE);
-                Toast.makeText(getApplicationContext(), "Connection error: " + error.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        }){
-            @Override
-            protected Map<String, String> getParams(){
-                Map<String, String> Params = new HashMap<>();
-                Params.put("searchTable", "users");
-                Params.put("searchCols", "userName, userEmail");
-                Params.put("searchTerm", query);
-                return Params;
-            }
-        };
-
-        RequestQueue reqQ = Volley.newRequestQueue(getApplicationContext());
-        reqQ.add(Sreq);
-
-    }
 
 
 

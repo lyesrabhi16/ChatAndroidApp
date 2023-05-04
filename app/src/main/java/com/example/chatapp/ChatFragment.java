@@ -1,5 +1,6 @@
 package com.example.chatapp;
 
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -81,6 +82,14 @@ public class ChatFragment extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 finish();
+            }
+        });
+        CBind.buttonAccount.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent account = new Intent(getApplicationContext(), AccountActivity.class);
+                account.putExtra("userID", R_userID);
+                startActivity(account);
             }
         });
 

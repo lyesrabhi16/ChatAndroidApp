@@ -1,7 +1,8 @@
 package com.example.chatapp;
 
 public class Configs {
-    private static String IP = "192.168.43.147";
+    //192.168.43.147
+    private static String IP = "10.2.62.78";
     private static String socketURL = "http://"+IP+":8000/";
     private static String serverURL = "http://"+IP+":8001";
     private static String signupURL = serverURL + "/signup";
@@ -12,6 +13,7 @@ public class Configs {
     private static String messagesURL = serverURL +"/messages";
 
     private static String friendsURL = serverURL +"/friends";
+    private static String addFriendsURL = friendsURL +"/add";
 
 
     public static String getSocketURL() {
@@ -84,5 +86,9 @@ public class Configs {
 
     public static void setFriendsURL(String friendsURL) {
         Configs.friendsURL = friendsURL;
+    }
+
+    public static String getAddFriendsURL() {
+        return addFriendsURL;
     }
 }

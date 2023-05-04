@@ -6,7 +6,12 @@
         android:icon="@drawable/baseline_chat_24"
         android:title="Chats" />
     <item
+        android:id="@+id/searchFragment"
+        android:icon="@drawable/baseline_search_24"
+        android:title="Search" />
+    <item
         android:id="@+id/peopleFragment"
         android:icon="@drawable/baseline_people_24"
         android:title="People" />
+
 </menu>
