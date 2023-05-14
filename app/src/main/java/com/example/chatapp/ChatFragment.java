@@ -67,11 +67,28 @@ public class ChatFragment extends AppCompatActivity {
         CBind.buttonAccount.setText(R_userName);
 
         chatItemsList = new ArrayList<ChatItem>();
+        User user = User.getInstance(getApplicationContext());
 
         chatItemAdapter = new ChatItemAdapter(chatItemsList);
         CBind.recylcerChat.setAdapter(chatItemAdapter);
-        User user = User.getInstance(getApplicationContext());
-        loadMessages(user.getUserID(), R_userID);
+
+        CBind.progressBar2.setVisibility(View.VISIBLE);
+        messages.loadMessages(user.getUserID(), R_userID, R_userName, getApplicationContext(), new onRequestFinish() {
+            @Override
+            public void onFinish(ArrayList args) {
+                CBind.progressBar2.setVisibility(View.GONE);
+                chatItemsList = args;
+                chatItemAdapter.setList(chatItemsList);
+                CBind.recylcerChat.setAdapter(chatItemAdapter);
+                if (chatItemsList.size() > 0)
+                    CBind.recylcerChat.smoothScrollToPosition(chatItemsList.size()-1);
+            }
+
+            @Override
+            public void onError(ArrayList args) {
+                CBind.progressBar2.setVisibility(View.GONE);
+            }
+        });
 
         socket = SocketClient.getSocket();
         socketListenersOff();
@@ -104,7 +121,7 @@ public class ChatFragment extends AppCompatActivity {
                     message.put("sender", user.getUserID());
                     message.put("receiver", R_userID);
                     message.put("content", msg);
-                    message.put("date", getDate("yyyy-MM-dd HH:mm:ss") );
+                    message.put("date", messages.getCurrentDate("yyyy-MM-dd HH:mm:ss") );
 
                     socket.emit("chat message", message.toString());
                     CBind.edittextMessage.setText("");
@@ -142,18 +159,26 @@ public class ChatFragment extends AppCompatActivity {
                         try {
                             JSONObject msg = new JSONObject(args[0].toString());
                             ChatItem item = new ChatItem();
-                            item.setHeader(R_userName);
+                            if (User.getInstance(getApplicationContext()).getUserID() == msg.getInt("sender")){
+                                item.setType(ChatItem.SENDER);
+                                item.setHeader(User.getInstance(getApplicationContext()).getUserName());
+                            }
+                            else{
+                                item.setType(ChatItem.RECEIVER);
+                                item.setHeader(R_userName);
+                            }
                             item.setMessage(msg.getString("content"));
-                            item.setFooter(msg.getString("date"));
-                            String[] d = item.getFooter().split(" ");
+                            //item.setFooter(msg.getString("date"));
+                            item.setFooter("");
+                            /*String[] d = item.getFooter().split(" ");
                             String date = d[0];
-                            if(date.equals(getDate("dd-MM-yyyy"))){
+                            if(date.equals(messages.getCurrentDate("dd-MM-yyyy"))){
                                 String time = d[1];
                                 item.setFooter(time);
                             }
                             else{
                                 item.setFooter(date);
-                            }
+                            }*/
 
                             chatItemsList.add(item);
                             chatItemAdapter.setList(chatItemsList);
@@ -173,75 +198,5 @@ public class ChatFragment extends AppCompatActivity {
         socket.off("chat message");
     }
 
-    public void loadMessages(int userID1, int userID2){
 
-        CBind.progressBar2.setVisibility(View.VISIBLE);
-
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getMessagesURL(), new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                CBind.progressBar2.setVisibility(View.GONE);
-                try {
-                    JSONObject res = new JSONObject(response);
-
-                    if(res.has("error")){
-                        Toast.makeText(getApplicationContext(), "error: "+ res.get("error"), Toast.LENGTH_LONG).show();
-                    }
-                    else{
-                        chatItemsList = new ArrayList<ChatItem>();
-                        JSONArray resArr = res.getJSONArray("messages");
-                        for (int i = 0; i < resArr.length(); i++) {
-                            JSONObject r = resArr.getJSONObject(i);
-
-                            ChatItem item = new ChatItem();
-                            item.setHeader(R_userName);
-                            item.setMessage(r.getString("content"));
-                            item.setFooter(r.getString("date"));
-                            String[] d = item.getFooter().split(" ");
-                            String date = d[0];
-                            if(date.equals(getDate("dd-MM-yyyy"))){
-                                String time = d[1];
-                                item.setFooter(time);
-                            }
-                            else{
-                                item.setFooter(date);
-                            }
-
-                            chatItemsList.add(item);
-                        }
-                        chatItemAdapter.setList(chatItemsList);
-                        CBind.recylcerChat.setAdapter(chatItemAdapter);
-                        if (chatItemsList.size() > 0)
-                          CBind.recylcerChat.smoothScrollToPosition(chatItemsList.size()-1);
-                    }
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    Toast.makeText(getApplicationContext(), "Response error: "+ e.getMessage(), Toast.LENGTH_LONG).show();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                CBind.progressBar2.setVisibility(View.GONE);
-                Toast.makeText(getApplicationContext(), "Connection error: " + error.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        }){
-            @Override
-            protected Map<String, String> getParams(){
-                Map<String, String> Params = new HashMap<>();
-                Params.put("userID1", ""+userID1);
-                Params.put("userID2", ""+userID2);
-                return Params;
-            }
-        };
-
-        RequestQueue reqQ = Volley.newRequestQueue(getApplicationContext());
-        reqQ.add(Sreq);
-    }
-    public String getDate(String format){
-        String date;
-        date = new SimpleDateFormat(format, Locale.getDefault()).format(new Date());
-        return date;
-    }
 }

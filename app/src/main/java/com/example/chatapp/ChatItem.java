@@ -1,7 +1,9 @@
 package com.example.chatapp;
 
 public class ChatItem {
-    private int messageID;
+    public static final int  SENDER = 0;
+    public static final int  RECEIVER = 1;
+    private int messageID, type;
     private String  header, message, footer, avatarText;
 
 
@@ -43,5 +45,15 @@ public class ChatItem {
 
     public void setMessageID(int messageID) {
         this.messageID = messageID;
+    }
+
+
+
+    public int getType() {
+        return type;
+    }
+
+    public void setType(int type) {
+        this.type = type;
     }
 }

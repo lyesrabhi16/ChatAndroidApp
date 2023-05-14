@@ -57,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
         User user = User.getInstance(getApplicationContext());
         if(user.isLoggedin()){
             MainBinding.buttonAccount.setText(user.getUserName());
+            Friends.loadFriends(getApplicationContext());
         }
         else{
             MainBinding.buttonAccount.setText("Account");

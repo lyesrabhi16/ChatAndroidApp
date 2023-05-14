@@ -16,8 +16,9 @@ import java.util.ArrayList;
 public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ViewHolder> {
 
     private ArrayList<ChatItem> list;
-
-    public ChatItemAdapter(ArrayList<ChatItem> list) {
+    private static int SENDER = 0, RECEIVER = 1;
+    private int userID;
+    public ChatItemAdapter( ArrayList<ChatItem> list) {
         this.list = list;
     }
 
@@ -31,10 +32,25 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ViewHo
         notifyDataSetChanged();
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        switch (list.get(position).getType()){
+            case ChatItem.SENDER: return ChatItem.SENDER;
+            case ChatItem.RECEIVER: return ChatItem.RECEIVER;
+        }
+        return 0;
+    }
 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        switch (viewType){
+            case ChatItem.SENDER:
+                return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_item, parent, false));
+            case ChatItem.RECEIVER:
+                return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_item_right, parent, false));
+        }
+
         return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_item, parent, false));
     }
 
@@ -46,6 +62,7 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ViewHo
         holder.Footer.setText(item.getFooter());
         holder.Avatar.setText(item.getAvatarText());
         holder.Avatar.setIconResource(R.drawable.baseline_account_circle_32);
+
 
     }
 

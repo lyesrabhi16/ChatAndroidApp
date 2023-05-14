@@ -331,7 +331,7 @@ app.post("/messages", (req, res)=>{
         response = undefined,
         userID1 = req.body["userID1"],
         userID2 = req.body["userID2"],
-        sql = "SELECT * FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)";
+        sql = "SELECT * FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER By date ASC";
     
     dbc.query(
         sql,
@@ -459,6 +459,7 @@ app.post("/friends", (req, res)=>{
 
 
 app.post("/friends/add", (req, res)=>{
+    
     if(req.body["userID1"] === undefined){
         let message = "missing parameter : userID1"
         console.error(message);

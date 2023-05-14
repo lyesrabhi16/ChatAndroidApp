@@ -101,6 +101,10 @@ public class PeopleFragment extends Fragment {
                             item.setSubTitle(r.getString("userEmail"));
                             personItemArrayList.add(item);
 
+                            if(!Friends.getFriends().contains(item.getUserID())){
+                                Friends.getFriends().add(item.getUserID());
+                            }
+
                         }
                         adapter.setList(personItemArrayList);
                         BPeople.recyclerPeople.setAdapter(adapter);
