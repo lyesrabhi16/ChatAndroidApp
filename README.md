@@ -67,8 +67,8 @@ All routes are `POST` with a JSON body and answer with JSON; a failure is `{"err
 | `/user` | `userID` | `userID`, `userName`, `userEmail` |
 | `/search` | `searchTable` (`users`), `searchCols` (`userName, userEmail`), `searchTerm` | `results` (up to 100 users) |
 | `/friends` | `userID` | `friends` |
-| `/friends/add`, `/friends/remove` | `userID1`, `userID2` | empty on success |
-| `/chats` | `userID` | `messages`: the last message of each conversation, with the other user |
+| `/friends/add`, `/friends/remove` | `userID1`, `userID2` | `messages`: the database result (`affectedRows` is `1` on success) |
+| `/chats` | `userID` | `messages`: the user's messages, each with the name and e-mail of the person involved (the app turns them into the conversation list) |
 | `/messages` | `userID1`, `userID2` | `messages`: the conversation |
 | `/messages/send` | `sender`, `receiver`, `content`, `date` | `messageID` |
 
