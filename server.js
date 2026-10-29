@@ -29,6 +29,89 @@ dbc.query("SELECT 1", err => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// ---- authentication -------------------------------------------------------------------------------------------
+// /signup and /signin return a signed token (JWT). Every other route and every Socket.IO connection must present it,
+// and the identity used for authorization always comes from the token, never from an id sent by the client.
+const jwt = require("jsonwebtoken"), crypto = require("crypto");
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString("hex");
+if (!process.env.JWT_SECRET) {
+    console.warn("JWT_SECRET is not set: using a random secret, so every token stops working when the server restarts.");
+}
+const TOKEN_LIFETIME = process.env.TOKEN_LIFETIME || "30d";
+
+const issueToken = userID => jwt.sign({ sub: String(userID) }, JWT_SECRET, { algorithm: "HS256", expiresIn: TOKEN_LIFETIME });
+
+function userIDFromToken(token) {
+    try {
+        const id = Number(jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] }).sub);
+        return Number.isInteger(id) ? id : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function requireAuth(req, res, next) {
+    const header = req.headers["authorization"] || "";
+    const id = header.startsWith("Bearer ") ? userIDFromToken(header.slice(7)) : null;
+    if (id === null) {
+        res.status(401).json({ error: "authentication required" });
+        return;
+    }
+    req.userID = id;
+    next();
+}
+
+const forbidden = res => res.status(403).json({ error: "forbidden" });
+
+// argon2.verify throws on a malformed stored hash; that must be a failed sign-in, not an unhandled rejection
+async function verifyPassword(hash, password) {
+    try {
+        return await argon2.verify(hash, password);
+    } catch (e) {
+        return false;
+    }
+}
+
+// The caller may only act as themselves: a missing id becomes their own, a different id is refused.
+const asSelf = field => (req, res, next) => {
+    if (req.body[field] === undefined) req.body[field] = req.userID;
+    else if (Number(req.body[field]) !== req.userID) { forbidden(res); return; }
+    next();
+};
+// Field types: a JSON client could otherwise send objects or arrays where a string or number is expected.
+const mustBeStrings = (...fields) => (req, res, next) => {
+    if (fields.some(f => typeof req.body[f] !== "string" || req.body[f].length === 0)) { res.json({ error : "invalid parameters" }); return; }
+    next();
+};
+const mustBeIntegers = (...fields) => (req, res, next) => {
+    if (fields.some(f => !Number.isInteger(Number(req.body[f])))) { res.json({ error : "invalid parameters" }); return; }
+    next();
+};
+const notYourself = field => (req, res, next) => {
+    if (Number(req.body[field]) === req.userID) { res.json({ error : "you cannot do this with yourself" }); return; }
+    next();
+};
+
+// A conversation can only be read by one of its two participants.
+const participant = (a, b) => (req, res, next) => {
+    if (Number(req.body[a]) !== req.userID && Number(req.body[b]) !== req.userID) { forbidden(res); return; }
+    next();
+};
+
+// At most 10 failed sign-ins per client address and e-mail every 15 minutes (slows down password guessing).
+const failedSignins = new Map();
+const signinKey = req => req.ip + "|" + String(req.body["userEmail"]).toLowerCase();
+function tooManyFailures(key) {
+    const entry = failedSignins.get(key);
+    if (entry && entry.resetAt < Date.now()) failedSignins.delete(key);
+    return entry !== undefined && entry.resetAt >= Date.now() && entry.count >= 10;
+}
+function recordFailure(key) {
+    const entry = failedSignins.get(key);
+    if (entry && entry.resetAt >= Date.now()) entry.count++;
+    else failedSignins.set(key, { count: 1, resetAt: Date.now() + 15 * 60 * 1000 });
+}
+
 app.post("/signup", async (req, res) => {
     
     if(req.body["userName"] === undefined){
@@ -56,12 +139,31 @@ app.post("/signup", async (req, res) => {
         return;
     }
     
+    const name = req.body["userName"], email = req.body["userEmail"], password = req.body["userPassword"];
+    if (typeof name !== "string" || typeof email !== "string" || typeof password !== "string") {
+        res.json({error : "invalid parameters"});
+        return;
+    }
+    // limits follow the columns of the users table (userName varchar(20), userEmail varchar(50))
+    if (name.trim().length === 0 || name.length > 20) {
+        res.json({error : "userName must be 1 to 20 characters"});
+        return;
+    }
+    if (email.trim().length === 0 || email.length > 50) {
+        res.json({error : "userEmail must be 1 to 50 characters"});
+        return;
+    }
+    if (password.length < 6 || password.length > 200) {
+        res.json({error : "userPassword must be 6 to 200 characters"});
+        return;
+    }
+
     let
         response = undefined,
         user = {
             userName : req.body["userName"],
             userEmail : req.body["userEmail"],
-            userPassword : await argon2.hash(req.body["userPassword"]) 
+            userPassword : await argon2.hash(password) 
         },
         sql = "INSERT INTO `users` SET ?";
     dbc.query(
@@ -85,6 +187,7 @@ app.post("/signup", async (req, res) => {
                 console.info('user registered');
                 response = {
                     userID    : result.insertId,
+                    token     : issueToken(result.insertId)
                 };
                 res.json(response);
             }
@@ -112,7 +215,17 @@ app.post("/signin", (req, res) => {
     }
     
 
-    let 
+    if (typeof req.body["userEmail"] !== "string" || typeof req.body["userPassword"] !== "string") {
+        res.json({error : "invalid parameters"});
+        return;
+    }
+    const attemptKey = signinKey(req);
+    if (tooManyFailures(attemptKey)) {
+        res.status(429).json({error : "too many failed attempts, try again later"});
+        return;
+    }
+
+    let
         response = undefined,
         user = {
             userEmail : req.body["userEmail"],
@@ -129,23 +242,28 @@ app.post("/signin", (req, res) => {
         else {
             let result0 = result[0];
             if ( result0 === undefined ){
-                console.error("email does not exits");
-                response = {error : "email does not exits"};
+                // same message as a wrong password, so the response does not reveal which e-mails are registered
+                recordFailure(attemptKey);
+                console.error("sign in failed: unknown e-mail");
+                response = {error : "invalid email or password"};
                 res.json(response);
             }
             else{
-                if (await argon2.verify(result0.userPassword,user.userPassword)){
+                if (await verifyPassword(result0.userPassword, user.userPassword)){
                     console.info('user signed in');
+                    failedSignins.delete(attemptKey);
                     response = {
                         userID    : result0.userID,
                         userEmail : result0.userEmail,
-                        userName : result0.userName
+                        userName : result0.userName,
+                        token : issueToken(result0.userID)
                     };
                     res.json(response);
                 }
                 else{
-                    console.error("wrong password");
-                    response = {error : "wrong password"};
+                    recordFailure(attemptKey);
+                    console.error("sign in failed: wrong password");
+                    response = {error : "invalid email or password"};
                     res.json(response);
                 }
             }
@@ -155,7 +273,7 @@ app.post("/signin", (req, res) => {
     })
 });
 
-app.post("/user",(req, res) =>{
+app.post("/user", requireAuth, (req, res) =>{
 
     if(req.body["userID"] === undefined){
         let message = "missing parameter : userID"
@@ -201,7 +319,7 @@ app.post("/user",(req, res) =>{
     })
 });
 
-app.post("/search",(req, res) => {
+app.post("/search", requireAuth, (req, res) => {
     if(req.body["searchTerm"] === undefined){
         let message = "missing parameter : searchTerm"
         console.error(message);
@@ -290,7 +408,7 @@ app.post("/search",(req, res) => {
 
 });
 
-app.post("/chats", (req, res)=>{
+app.post("/chats", requireAuth, asSelf("userID"), (req, res)=>{
     if(req.body["userID"] === undefined){
         let message = "missing parameter : userID"
         console.error(message);
@@ -309,18 +427,18 @@ app.post("/chats", (req, res)=>{
                     r.messageID, r.sender, r.receiver, r.date, r.content
                 FROM users,
                     (
-                        SELECT * 
-                        FROM messages 
+                        SELECT *
+                        FROM messages
                         WHERE
-                            sender = '${userID}'
+                            sender = ?
                             OR
-                            receiver = '${userID}'
+                            receiver = ?
                     ) as r
                 WHERE userID = r.sender OR userID = r.receiver
-                ORDER BY messages.date DESC, messageID DESC
+                ORDER BY r.date DESC, r.messageID DESC
             `.replace(/\n/g, " ");
-    
-    dbc.query(sql, (err, results)=>{
+
+    dbc.query(sql, [userID, userID], (err, results)=>{
         if (err){
             response = {error : ""+ err.code};
             res.json(response);
@@ -336,7 +454,7 @@ app.post("/chats", (req, res)=>{
 
 });
 
-app.post("/messages", (req, res)=>{
+app.post("/messages", requireAuth, participant("userID1", "userID2"), (req, res)=>{
     if(req.body["userID1"] === undefined){
         let message = "missing parameter : userID1"
         console.error(message);
@@ -379,7 +497,7 @@ app.post("/messages", (req, res)=>{
 
 });
 
-app.post("/messages/send", (req, res)=>{
+app.post("/messages/send", requireAuth, asSelf("sender"), mustBeIntegers("receiver"), mustBeStrings("content", "date"), (req, res)=>{
     if(req.body["sender"] === undefined){
         let message = "missing parameter : sender"
         console.error(message);
@@ -445,7 +563,7 @@ app.post("/messages/send", (req, res)=>{
     
 });
 
-app.post("/friends", (req, res)=>{
+app.post("/friends", requireAuth, asSelf("userID"), (req, res)=>{
     if(req.body["userID"] === undefined){
         let message = "missing parameter : userID"
         console.error(message);
@@ -461,13 +579,14 @@ app.post("/friends", (req, res)=>{
         sql = `SELECT users.userID, users.userName, users.userEmail 
                 FROM users,
                     (
-                        select * from friends WHERE user1 = ${userID} OR user2 = ${userID}
+                        select * from friends WHERE user1 = ? OR user2 = ?
                     )  as f
-                where (userID = f.user1 OR userID = f.user2) AND userID != ${userID}
+                where (userID = f.user1 OR userID = f.user2) AND userID != ?
             `.replace(/\n/g," ");
-    
+
     dbc.query(
         sql,
+        [userID, userID, userID],
         (err, results)=>{
         if (err){
             response = {error : ""+ err.code};
@@ -485,7 +604,7 @@ app.post("/friends", (req, res)=>{
 });
 
 
-app.post("/friends/add", (req, res)=>{
+app.post("/friends/add", requireAuth, asSelf("userID1"), mustBeIntegers("userID2"), notYourself("userID2"), (req, res)=>{
     
     if(req.body["userID1"] === undefined){
         let message = "missing parameter : userID1"
@@ -532,7 +651,7 @@ app.post("/friends/add", (req, res)=>{
 
 });
 
-app.post("/friends/remove", (req, res)=>{
+app.post("/friends/remove", requireAuth, asSelf("userID1"), (req, res)=>{
     if(req.body["userID1"] === undefined){
         let message = "missing parameter : userID1"
         console.error(message);
@@ -584,6 +703,18 @@ app.listen(port, ()=> console.info("express server listening on port "+port));
 const {Server} = require("socket.io"),
     server = new Server(socketPort);
 
+// A connection must present a valid token, either as `auth: {token}` (Socket.IO 3+ clients) or `?token=...`.
+server.use((socket, next) => {
+    const token = (socket.handshake.auth && socket.handshake.auth.token) || socket.handshake.query.token;
+    const id = typeof token === "string" ? userIDFromToken(token) : null;
+    if (id === null) {
+        next(new Error("authentication required"));
+        return;
+    }
+    socket.userID = id;
+    next();
+});
+
 // clients is an array of client objects
 // client = { 
 //      socket : ?,
@@ -597,11 +728,13 @@ server.on("connection", (socket) => {
     
     socket.emit("message","hello from server");
     socket.emit("init request");
-    socket.on("init", (id)=>{
+    // The user is whoever the token says; an id sent by the client is ignored (kept as an event for older clients).
+    socket.on("init", ()=>{
 
+        for (const known of clients) if (known.socket === socket) return;
         let client = {
             socket : socket,
-            userID : id
+            userID : socket.userID
         };
         clients.add(client);
         console.info("Client connected : " + `[${client.userID}, ${client.socket.id}]`);
@@ -635,6 +768,10 @@ server.on("connection", (socket) => {
             || !Number.isInteger(Number(data["sender"])) || !Number.isInteger(Number(data["receiver"]))
             || typeof data["content"] !== "string" || data["content"].length === 0) {
             console.info(`client [${socket.id}] sent an incomplete message, ignored`);
+            return;
+        }
+        if (Number(data["sender"]) !== socket.userID) {
+            console.info(`client [${socket.id}] (user ${socket.userID}) tried to send as user ${data["sender"]}, ignored`);
             return;
         }
         // only the known columns are written, whatever else the client included
