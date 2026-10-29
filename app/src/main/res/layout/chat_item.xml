@@ -1,63 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/chat_avatar"
-        android:layout_width="40dp"
-        android:layout_height="wrap_content"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        app:iconGravity="textTop"
-        app:iconPadding="0dp"
-        app:icon="@drawable/baseline_account_circle_32"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:iconTint="@color/design_default_color_primary"
-        android:textColor="@color/design_default_color_primary"
-
-        />
+    android:layout_height="wrap_content"
+    android:paddingVertical="3dp">
 
     <LinearLayout
+        android:id="@+id/bubble"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:background="@drawable/bubble_in"
         android:orientation="vertical"
-        app:layout_constraintStart_toEndOf="@id/chat_avatar"
+        android:paddingHorizontal="14dp"
+        android:paddingTop="9dp"
+        android:paddingBottom="6dp"
+        app:layout_constrainedWidth="true"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        >
-            <TextView
-                android:id="@+id/header"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Header"
-                android:textSize="12sp"
-                android:textStyle="italic"
-                />
+        app:layout_constraintWidth_default="wrap"
+        app:layout_constraintHorizontal_bias="0.0"
+        android:layout_marginEnd="56dp">
+
+        <!-- sender name: only useful in group chats, hidden in a one-to-one conversation -->
+        <TextView
+            android:id="@+id/header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceLabelMedium"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="gone" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/body"
-            android:background="@drawable/chat_message"
-            android:padding="10dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Message"
-            android:textColor="@color/white"
-            />
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="16sp" />
 
-            <TextView
-                android:id="@+id/footer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="footer"
-                android:textSize="10sp"
-                android:textStyle="italic"
-                android:textAlignment="viewEnd"
-                android:gravity="end|center_vertical" />
+        <TextView
+            android:id="@+id/footer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="2dp"
+            android:alpha="0.75"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textSize="11sp" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,14 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="light_blue_400">#FF29B6F6</color>
-    <color name="light_blue_600">#FF039BE5</color>
-    <color name="gray_400">#FFBDBDBD</color>
-    <color name="gray_600">#FF757575</color>
+
+    <!-- Brand: indigo with a teal accent -->
+    <color name="indigo_600">#FF4F46E5</color>
+    <color name="indigo_100">#FFE0E7FF</color>
+    <color name="indigo_300">#FFA5B4FC</color>
+    <color name="indigo_800">#FF3730A3</color>
+    <color name="indigo_950">#FF1E1B4B</color>
+    <color name="teal_600">#FF0D9488</color>
+    <color name="teal_100">#FFCCFBF1</color>
+    <color name="teal_300">#FF5EEAD4</color>
+
+    <!-- Neutrals -->
+    <color name="surface_light">#FFFFFFFF</color>
+    <color name="background_light">#FFF6F7FB</color>
+    <color name="surface_variant_light">#FFECEEF6</color>
+    <color name="on_surface_light">#FF14171F</color>
+    <color name="on_surface_variant_light">#FF5B6070</color>
+    <color name="outline_light">#FFC9CDDA</color>
+
+    <color name="surface_dark">#FF151821</color>
+    <color name="background_dark">#FF0E1016</color>
+    <color name="surface_variant_dark">#FF232734</color>
+    <color name="on_surface_dark">#FFE6E8F0</color>
+    <color name="on_surface_variant_dark">#FFA3A9BA</color>
+    <color name="outline_dark">#FF3A3F52</color>
+
+    <color name="error_light">#FFDC2626</color>
+    <color name="error_dark">#FFFCA5A5</color>
+
+    <!-- Avatar palette: a person always gets the same colour (see Avatars.java) -->
+    <color name="avatar_1">#FF6366F1</color>
+    <color name="avatar_2">#FF0EA5E9</color>
+    <color name="avatar_3">#FF14B8A6</color>
+    <color name="avatar_4">#FF22C55E</color>
+    <color name="avatar_5">#FFF59E0B</color>
+    <color name="avatar_6">#FFEF4444</color>
+    <color name="avatar_7">#FFEC4899</color>
+    <color name="avatar_8">#FF8B5CF6</color>
 </resources>

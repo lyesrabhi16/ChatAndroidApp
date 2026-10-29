@@ -1,112 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="20dp">
+    android:fillViewport="true"
+    android:background="?android:attr/colorBackground">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/textInputLayout"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:startIconDrawable="@drawable/baseline_person_24"
-        android:layout_marginVertical="20dp"
-        app:layout_constraintBottom_toTopOf="@+id/textinput_layout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="72dp"
+        android:paddingBottom="24dp">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/input_email"
-            android:inputType="textEmailAddress"
+        <ImageView
+            android:layout_width="76dp"
+            android:layout_height="76dp"
+            android:background="@drawable/logo_tile"
+            android:contentDescription="@string/app_name" />
+
+        <TextView
+            android:id="@+id/textView_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:gravity="center"
+            android:text="Welcome back"
+            android:textAppearance="?attr/textAppearanceHeadlineMedium"
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="Sign in to continue the conversation"
+            android:textAppearance="?attr/textAppearanceBodyLarge"
+            android:textColor="?attr/colorOnSurfaceVariant" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="36dp"
             android:hint="Email"
-            android:drawablePadding="10dp"
-            android:singleLine="true"
-            />
-        <requestFocus/>
-    </com.google.android.material.textfield.TextInputLayout>
+            app:startIconDrawable="@drawable/baseline_person_24">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/textinput_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:startIconDrawable="@drawable/baseline_lock_24"
-        app:endIconMode="password_toggle"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textEmailAddress"
+                android:singleLine="true" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/input_password"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textinput_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
             android:hint="Password"
-            android:inputType="textPassword"
-            android:singleLine="true" />
-    </com.google.android.material.textfield.TextInputLayout>
+            app:endIconMode="password_toggle"
+            app:startIconDrawable="@drawable/baseline_lock_24">
 
-    <Button
-        android:id="@+id/buttonSignIn"
-        android:paddingHorizontal="50dp"
-        android:paddingVertical="15dp"
-        android:layout_marginTop="50dp"
-        android:textSize="20sp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Sign In"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textinput_layout" />
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:singleLine="true" />
+        </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonSignIn"
+            style="@style/Widget.ChatApp.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="Sign in" />
 
-    <TextView
-        android:id="@+id/textView_header"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="30dp"
-        android:textAlignment="center"
-        android:textSize="32sp"
-        android:text="Sign In"
-        android:textStyle="bold|italic"
-        android:textColor="@color/design_default_color_primary"
-        app:layout_constraintBottom_toTopOf="@+id/textInputLayout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:gravity="center_horizontal" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/textView_reset_password"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Forgot password?"
+            android:textAllCaps="false" />
 
-    <TextView
-        android:id="@+id/textView_reset_password"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:minHeight="48dp"
-        android:textAlignment="center"
-        android:gravity="center"
-        android:textSize="18sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/buttonSignIn"
-        android:layout_marginTop="50dp"
-        android:text="forgot password?"
-        android:clickable="true"
-        />
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
-    <TextView
-        android:id="@+id/textView_SignUp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:minHeight="48dp"
-        android:textAlignment="center"
-        android:gravity="center"
-        android:textSize="18sp"
-        android:text="don't have an account? Sign up"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView_reset_password"
-        android:clickable="true"
-        />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/textView_SignUp"
+            style="@style/Widget.ChatApp.Button.Tonal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Create an account" />
+    </LinearLayout>
+</ScrollView>
