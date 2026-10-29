@@ -57,6 +57,7 @@ public class PeopleFragment extends Fragment {
             }
         });
         BPeople.recyclerPeople.setAdapter(adapter);
+                        BPeople.emptyState.setVisibility(View.GONE);
 
     }
 
@@ -89,7 +90,7 @@ public class PeopleFragment extends Fragment {
                     else{
                         JSONArray resArr = res.getJSONArray("friends");
                         if(resArr.length()<1) {
-                            Toast.makeText(getActivity(), "0 friends", Toast.LENGTH_LONG).show();
+                            BPeople.emptyState.setVisibility(View.VISIBLE);
                             return;
                         }
                         for (int i = 0; i < resArr.length(); i++) {
@@ -108,6 +109,7 @@ public class PeopleFragment extends Fragment {
                         }
                         adapter.setList(personItemArrayList);
                         BPeople.recyclerPeople.setAdapter(adapter);
+                        BPeople.emptyState.setVisibility(View.GONE);
                         BPeople.recyclerPeople.smoothScrollToPosition(personItemArrayList.size()-1);
                     }
 

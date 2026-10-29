@@ -64,6 +64,7 @@ public final class User {
     }
 
     public boolean logout(){
+        SocketClient.closeSocket();  // the connection belongs to the user who signed in
         SharedPreferences.Editor editor = prefs().edit();
         editor.clear();
         editor.apply();

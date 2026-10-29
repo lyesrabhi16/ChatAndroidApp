@@ -40,7 +40,7 @@ public class SignInActivity extends AppCompatActivity {
 
         }
 
-        getSupportActionBar().hide();
+        if (getSupportActionBar() != null) getSupportActionBar().hide();  // the theme has no action bar
         SIBinding = ActivitySigninBinding.inflate(getLayoutInflater());
         setContentView(SIBinding.getRoot());
 

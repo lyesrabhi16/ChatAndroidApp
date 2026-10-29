@@ -64,6 +64,7 @@ public class ChatsFragment extends Fragment {
             }
         });
         BChats.recyclerChats.setAdapter(adapter);
+                            BChats.emptyState.setVisibility(View.GONE);
 
     }
 
@@ -101,7 +102,7 @@ public class ChatsFragment extends Fragment {
                         User user = User.getInstance(getContext());
                         JSONArray resArr = res.getJSONArray("messages");
                         if(resArr.length()<1) {
-                            Toast.makeText(getActivity(), "0 messages", Toast.LENGTH_LONG).show();
+                            BChats.emptyState.setVisibility(View.VISIBLE);
                             return;
                         }
                         ArrayList<PersonItem> l = new ArrayList<PersonItem>();
@@ -131,6 +132,7 @@ public class ChatsFragment extends Fragment {
                             }
                             adapter.setList(l);
                             BChats.recyclerChats.setAdapter(adapter);
+                            BChats.emptyState.setVisibility(View.GONE);
 
                         }
                     }

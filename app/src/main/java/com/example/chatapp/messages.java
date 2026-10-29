@@ -109,6 +109,7 @@ public class messages {
                                 item.setHeader(R_userName);
                             }
                             item.setMessage(r.getString("content"));
+                            item.setFooter(TimeFormat.bubble(r.getString("date")));
                             /*item.setFooter(r.getString("date"));
                             String[] d = item.getFooter().split(" ");
                             String date = d[0];
@@ -119,7 +120,6 @@ public class messages {
                             else{
                                 item.setFooter(date);
                             }*/
-                            item.setFooter("");
 
                             chatItemsList.add(item);
                         }

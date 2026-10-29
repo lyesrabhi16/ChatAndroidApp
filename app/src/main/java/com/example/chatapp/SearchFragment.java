@@ -67,6 +67,8 @@ public class SearchFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         SBind = FragmentSearchBinding.inflate(inflater, container, false);
+        // before any search: invite the user to type something (the results hide this again)
+        SBind.emptyState.setVisibility(View.VISIBLE);
         return SBind.getRoot();
     }
     public static String getQuery() {
@@ -93,7 +95,10 @@ public class SearchFragment extends Fragment {
 
                         JSONArray resArr = res.getJSONArray("results");
                         if( resArr.length() < 1){
-                            Toast.makeText(getContext(), "0 results found.", Toast.LENGTH_SHORT).show();
+                            adapter.setList(new ArrayList<PersonItem>());
+                            SBind.emptyTitle.setText("No results");
+                            SBind.emptyHint.setText("Try another name or e-mail.");
+                            SBind.emptyState.setVisibility(View.VISIBLE);
                         }
                         else{
                             ArrayList<PersonItem> l = new ArrayList<PersonItem>();
@@ -113,6 +118,7 @@ public class SearchFragment extends Fragment {
                             }
                             adapter.setList(l);
                             SBind.recyclerSearch.setAdapter(adapter);
+                            SBind.emptyState.setVisibility(View.GONE);
                         }
 
                     }

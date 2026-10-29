@@ -61,9 +61,6 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ViewHo
         holder.Header.setText(item.getHeader());
         holder.Message.setText(item.getMessage());
         holder.Footer.setText(item.getFooter());
-        holder.Avatar.setText(item.getAvatarText());
-        holder.Avatar.setIconResource(R.drawable.baseline_account_circle_32);
-
 
     }
 
@@ -73,13 +70,11 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ViewHo
     }
     public static class ViewHolder extends RecyclerView.ViewHolder{
         private TextView Message, Header, Footer;
-        private MaterialButton Avatar;
         public ViewHolder(View view){
             super(view);
             Message = view.findViewById(R.id.body);
             Header = view.findViewById(R.id.header);
             Footer = view.findViewById(R.id.footer);
-            Avatar = view.findViewById(R.id.chat_avatar);
         }
     }
 }

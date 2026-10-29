@@ -52,6 +52,7 @@ public class AccountActivity extends AppCompatActivity {
             BAccount.buttonAddFriend.setVisibility(View.GONE);
 
             BAccount.username.setText(user.getUserName());
+            Avatars.apply(BAccount.userAvatar, user.getUserName());
             BAccount.email.setText(user.getUserEmail());
 
 
@@ -126,6 +127,7 @@ public class AccountActivity extends AppCompatActivity {
                     }
                     else{
                         BAccount.username.setText(res.getString("userName"));
+                        Avatars.apply(BAccount.userAvatar, res.getString("userName"));
                         BAccount.email.setText(res.getString("userEmail"));
                     }
                 } catch (JSONException e) {

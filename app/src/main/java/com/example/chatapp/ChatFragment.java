@@ -56,7 +56,7 @@ public class ChatFragment extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getSupportActionBar().hide();
+        if (getSupportActionBar() != null) getSupportActionBar().hide();  // the theme has no action bar
 
         CBind = FragmentChatBinding.inflate(getLayoutInflater());
         setContentView(CBind.getRoot());
@@ -65,6 +65,7 @@ public class ChatFragment extends AppCompatActivity {
         R_userName = getIntent().getStringExtra("userName");
 
         CBind.buttonAccount.setText(R_userName);
+        Avatars.apply(CBind.chatHeaderAvatar, R_userName);
 
         chatItemsList = new ArrayList<ChatItem>();
         User user = User.getInstance(getApplicationContext());
@@ -168,8 +169,8 @@ public class ChatFragment extends AppCompatActivity {
                                 item.setHeader(R_userName);
                             }
                             item.setMessage(msg.getString("content"));
+                            item.setFooter(TimeFormat.now());
                             //item.setFooter(msg.getString("date"));
-                            item.setFooter("");
                             /*String[] d = item.getFooter().split(" ");
                             String date = d[0];
                             if(date.equals(messages.getCurrentDate("dd-MM-yyyy"))){

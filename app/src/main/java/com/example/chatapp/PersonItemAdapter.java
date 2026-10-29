@@ -41,7 +41,10 @@ public class PersonItemAdapter extends RecyclerView.Adapter<PersonItemAdapter.Vi
         PersonItem item = list.get(position);
         holder.Title.setText(item.getTitle());
         holder.subTitle.setText(item.getSubTitle());
-        holder.avatar.setImageResource(R.drawable.baseline_person_48);
+        Avatars.apply(holder.avatar, item.getTitle());
+        String time = TimeFormat.list(item.getData());  // only the Chats tab has a date
+        holder.time.setText(time);
+        holder.time.setVisibility(time.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     @Override
@@ -52,11 +55,12 @@ public class PersonItemAdapter extends RecyclerView.Adapter<PersonItemAdapter.Vi
 
 
     public class ViewHolder extends RecyclerView.ViewHolder {
-        private ImageView avatar;
+        private TextView avatar, time;
         private TextView Title, subTitle;
         public ViewHolder(View view, RecyclerViewInterface recyclerViewInterface){
             super(view);
             avatar = view.findViewById(R.id.Avatar);
+            time = view.findViewById(R.id.Time);
             Title = view.findViewById(R.id.Title);
             subTitle = view.findViewById(R.id.subTitle);
 
