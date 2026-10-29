@@ -1,47 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="20dp">
+    android:background="?attr/selectableItemBackground"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="12dp">
 
-
-    <ImageView
+    <TextView
         android:id="@+id/Avatar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:srcCompat="@drawable/baseline_person_48"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        style="@style/ChatApp.Avatar"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:text="A"
+        android:textSize="22sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:tint="@color/design_default_color_primary" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/Title"
         android:layout_width="0dp"
-        android:paddingHorizontal="10dp"
         android:layout_height="wrap_content"
-        android:text="Title"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toEndOf="@+id/Avatar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="8dp"
+        android:ellipsize="end"
         android:maxLines="1"
-
-        />
+        android:text="Title"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:textColor="?attr/colorOnSurface"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/subTitle"
+        app:layout_constraintEnd_toStartOf="@+id/Time"
+        app:layout_constraintStart_toEndOf="@+id/Avatar"
+        app:layout_constraintTop_toTopOf="@+id/Avatar"
+        app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView
         android:id="@+id/subTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="subTitle"
-        android:paddingHorizontal="20dp"
-        app:layout_constraintStart_toEndOf="@+id/Avatar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/Title"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
         android:maxLines="1"
+        android:text="subTitle"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        app:layout_constraintBottom_toBottomOf="@+id/Avatar"
+        app:layout_constraintEnd_toStartOf="@+id/Badge"
+        app:layout_constraintStart_toStartOf="@+id/Title"
+        app:layout_constraintTop_toBottomOf="@+id/Title" />
 
-        />
+    <!-- green dot: this person is online -->
+    <View
+        android:id="@+id/OnlineDot"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:background="@drawable/online_dot"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/Avatar"
+        app:layout_constraintEnd_toEndOf="@+id/Avatar" />
+
+    <!-- number of unread messages -->
+    <TextView
+        android:id="@+id/Badge"
+        android:layout_width="wrap_content"
+        android:layout_height="22dp"
+        android:background="@drawable/badge_unread"
+        android:gravity="center"
+        android:minWidth="22dp"
+        android:paddingHorizontal="6dp"
+        android:textColor="?attr/colorOnPrimary"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/Avatar"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- only when choosing members of a group -->
+    <CheckBox
+        android:id="@+id/Check"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="false"
+        android:focusable="false"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- last message time, only filled in the Chats tab -->
+    <TextView
+        android:id="@+id/Time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?attr/textAppearanceLabelSmall"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        app:layout_constraintBaseline_toBaselineOf="@+id/Title"
+        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

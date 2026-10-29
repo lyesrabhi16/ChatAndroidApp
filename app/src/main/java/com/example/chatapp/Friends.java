@@ -55,7 +55,7 @@ public class Friends {
         this.ID2 = ID2;
     }
     public static void loadFriends(Context ctx){
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getFriendsURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getFriendsURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {
@@ -103,7 +103,7 @@ public class Friends {
     }
     public void Add(Context ctx, ActivityAccountBinding BAccount){
 
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getAddFriendsURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getAddFriendsURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {
@@ -144,7 +144,7 @@ public class Friends {
     }
     public void Delete(Context ctx, ActivityAccountBinding BAccount){
 
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getRemoveFriendsURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getRemoveFriendsURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {

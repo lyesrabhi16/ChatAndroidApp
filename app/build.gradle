@@ -8,12 +8,17 @@ android {
 
     defaultConfig {
         applicationId "com.example.chatapp"
-        minSdk 16
+        minSdk 21
         targetSdk 33
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Address of the machine running the chat server. 10.0.2.2 is the host as seen from the Android emulator;
+        // for a real phone use the computer's LAN IP:  ./gradlew assembleDebug -PchatServerHost=192.168.1.20
+        // (or put chatServerHost=... in ~/.gradle/gradle.properties).
+        buildConfigField "String", "SERVER_HOST", "\"${project.findProperty('chatServerHost') ?: '10.0.2.2'}\""
     }
 
     buildTypes {
@@ -26,8 +31,15 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    defaultConfig {
+        javaCompileOptions { annotationProcessorOptions { arguments += ["room.schemaLocation": "$projectDir/schemas".toString()] } }
+    }
+    testOptions {
+        unitTests.returnDefaultValues = true   // android.os.Handler etc. are inert stubs in plain JVM tests
+    }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 
@@ -37,9 +49,15 @@ dependencies {
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.annotation:annotation:1.5.0'
+    implementation 'androidx.exifinterface:exifinterface:1.3.6'   // rotates photos upright before they are sent
+    // offline cache of conversations and recent messages
+    implementation 'androidx.room:room-runtime:2.5.2'
+    annotationProcessor 'androidx.room:room-compiler:2.5.2'
     implementation 'androidx.navigation:navigation-fragment:2.5.3'
     implementation 'androidx.navigation:navigation-ui:2.5.3'
     testImplementation 'junit:junit:4.13.2'
+    // plain JVM tests get Android's stub org.json, which cannot parse; the Socket.IO client needs the real one
+    testImplementation 'org.json:json:20231013'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     //socket.io

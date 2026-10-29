@@ -37,10 +37,15 @@ import java.util.Map;
 public class AccountActivity extends AppCompatActivity {
 
     private ActivityAccountBinding BAccount;
+    private androidx.activity.result.ActivityResultLauncher<String> pickPhoto;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        pickPhoto = registerForActivityResult(new androidx.activity.result.contract.ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) uploadPhoto(uri);
+        });
 
         BAccount = ActivityAccountBinding.inflate(getLayoutInflater());
         setContentView(BAccount.getRoot());
@@ -52,7 +57,11 @@ public class AccountActivity extends AppCompatActivity {
             BAccount.buttonAddFriend.setVisibility(View.GONE);
 
             BAccount.username.setText(user.getUserName());
+            Avatars.apply(BAccount.userAvatar, user.getUserName(), user.getAvatar());
             BAccount.email.setText(user.getUserEmail());
+            BAccount.buttonChangePhoto.setVisibility(View.VISIBLE);
+            BAccount.buttonChangePhoto.setOnClickListener(this::showPhotoMenu);
+            BAccount.userAvatar.setOnClickListener(this::showPhotoMenu);
 
 
 
@@ -116,7 +125,7 @@ public class AccountActivity extends AppCompatActivity {
 
     }
     private void getUser(int id){
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getUserURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getUserURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {
@@ -126,6 +135,7 @@ public class AccountActivity extends AppCompatActivity {
                     }
                     else{
                         BAccount.username.setText(res.getString("userName"));
+                        Avatars.apply(BAccount.userAvatar, res.getString("userName"), Api.str(res, "avatar"));
                         BAccount.email.setText(res.getString("userEmail"));
                     }
                 } catch (JSONException e) {
@@ -149,5 +159,65 @@ public class AccountActivity extends AppCompatActivity {
         };
         RequestQueue reqQ = Volley.newRequestQueue(getApplicationContext());
         reqQ.add(Sreq);
+    }
+
+    private void showPhotoMenu(View anchor) {
+        User user = User.getInstance(getApplicationContext());
+        android.widget.PopupMenu menu = new android.widget.PopupMenu(this, anchor);
+        menu.getMenu().add(0, 1, 0, "Choose a photo");
+        if (user.getAvatar() != null) menu.getMenu().add(0, 2, 1, "Remove photo");
+        menu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == 1) pickPhoto.launch("image/*");
+            else setAvatar(null);
+            return true;
+        });
+        menu.show();
+    }
+
+    private void uploadPhoto(android.net.Uri uri) {
+        Attachments.photo(this, uri, new Attachments.Callback() {
+            @Override
+            public void onPicked(Attachments.Picked picked) {
+                Api.upload(AccountActivity.this, picked.data, picked.mime, picked.name, new Api.Callback() {
+                    @Override
+                    public void onSuccess(JSONObject json) {
+                        setAvatar(json.optString("attachment"));
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        Toast.makeText(AccountActivity.this, message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AccountActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /** `attachment` is an uploaded picture, or null to go back to the initial. */
+    private void setAvatar(String attachment) {
+        User user = User.getInstance(getApplicationContext());
+        JSONObject body = new JSONObject();
+        try {
+            body.put("attachment", attachment == null ? JSONObject.NULL : attachment);
+        } catch (JSONException e) {
+            return;
+        }
+        Api.post(this, "/me/avatar", body, new Api.Callback() {
+            @Override
+            public void onSuccess(JSONObject json) {
+                user.setAvatar(Api.str(json, "avatar"));
+                Avatars.apply(BAccount.userAvatar, user.getUserName(), user.getAvatar());
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(AccountActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

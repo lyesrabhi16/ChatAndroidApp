@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getSupportActionBar().hide();
+        if (getSupportActionBar() != null) getSupportActionBar().hide();  // the theme has no action bar
         MainBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(MainBinding.getRoot());
 
@@ -56,11 +56,11 @@ public class MainActivity extends AppCompatActivity {
 
         User user = User.getInstance(getApplicationContext());
         if(user.isLoggedin()){
-            MainBinding.buttonAccount.setText(user.getUserName());
+            Avatars.apply(MainBinding.buttonAccount, user.getUserName(), user.getAvatar());
             Friends.loadFriends(getApplicationContext());
         }
         else{
-            MainBinding.buttonAccount.setText("Account");
+            Avatars.apply(MainBinding.buttonAccount, "?");
         }
         NavController navController = Navigation.findNavController(this, R.id.nav_host_main);
         MainBinding.navControllerMain.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
@@ -82,9 +82,7 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
-        socket = SocketClient.getSocket();
-        if(socket == null)
-            socket = SocketClient.connectSocket();
+        socket = SocketClient.connectSocket();  // reuses the live connection after a rotation or theme change
         
         socket.on("init request", new Emitter.Listener() {
             @Override
@@ -99,8 +97,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        socketListenersOff();
-        socketListenersOn();
 
 
 
@@ -156,44 +152,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        socketListenersOn();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        socketListenersOff();
+        User user = User.getInstance(getApplicationContext());
+        if (user.isLoggedin()) Avatars.apply(MainBinding.buttonAccount, user.getUserName(), user.getAvatar());  // the picture may have changed in the profile
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        SocketClient.closeSocket();
+        // a rotation or dark-mode switch recreates this activity: only a real exit closes the connection
+        if (isFinishing()) SocketClient.closeSocket();
     }
 
-    public void socketListenersOn(){
-        if(socket.hasListeners("chat message")) return;
-        socket.on("chat message", new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        /*String msg = (String) args[0];
-                        ChatItem item = new ChatItem();
-                        item.setMessage(msg);
-                        list.add(item);
-                        adapter.notifyItemInserted(list.size()-1);
-                        MainBinding.list.smoothScrollToPosition(list.size()-1);*/
-                        Toast.makeText(getApplicationContext(), "message received in main: \n"+(String) args[0], Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-        });
-    }
-    public void socketListenersOff(){
-        socket.off("chat message");
-    }
 
 
 

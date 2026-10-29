@@ -14,3 +14,5 @@
 .cxx
 local.properties
 node_modules
+/.idea/deploymentTargetDropDown.xml
+.env

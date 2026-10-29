@@ -53,10 +53,12 @@ public class PeopleFragment extends Fragment {
                 Intent chat = new Intent(getContext(), ChatFragment.class);
                 chat.putExtra("userID", adapter.getList().get(position).getUserID());
                 chat.putExtra("userName", adapter.getList().get(position).getTitle());
+                chat.putExtra("avatar", adapter.getList().get(position).getAvatar());
                 startActivity(chat);
             }
         });
         BPeople.recyclerPeople.setAdapter(adapter);
+                        BPeople.emptyState.setVisibility(View.GONE);
 
     }
 
@@ -77,7 +79,7 @@ public class PeopleFragment extends Fragment {
 
     private void getFriends(int userID) {
         BPeople.progressBarPeople.setVisibility(View.VISIBLE);
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getFriendsURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getFriendsURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {
@@ -89,7 +91,7 @@ public class PeopleFragment extends Fragment {
                     else{
                         JSONArray resArr = res.getJSONArray("friends");
                         if(resArr.length()<1) {
-                            Toast.makeText(getActivity(), "0 friends", Toast.LENGTH_LONG).show();
+                            BPeople.emptyState.setVisibility(View.VISIBLE);
                             return;
                         }
                         for (int i = 0; i < resArr.length(); i++) {
@@ -99,6 +101,7 @@ public class PeopleFragment extends Fragment {
                             item.setUserID(r.getInt("userID"));
                             item.setTitle(r.getString("userName"));
                             item.setSubTitle(r.getString("userEmail"));
+                            item.setAvatar(Api.str(r, "avatar"));
                             personItemArrayList.add(item);
 
                             if(!Friends.getFriends().contains(item.getUserID())){
@@ -108,6 +111,7 @@ public class PeopleFragment extends Fragment {
                         }
                         adapter.setList(personItemArrayList);
                         BPeople.recyclerPeople.setAdapter(adapter);
+                        BPeople.emptyState.setVisibility(View.GONE);
                         BPeople.recyclerPeople.smoothScrollToPosition(personItemArrayList.size()-1);
                     }
 

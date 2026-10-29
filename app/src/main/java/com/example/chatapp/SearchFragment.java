@@ -67,6 +67,8 @@ public class SearchFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         SBind = FragmentSearchBinding.inflate(inflater, container, false);
+        // before any search: invite the user to type something (the results hide this again)
+        SBind.emptyState.setVisibility(View.VISIBLE);
         return SBind.getRoot();
     }
     public static String getQuery() {
@@ -79,7 +81,7 @@ public class SearchFragment extends Fragment {
     private void search(String query) {
         SBind.progressBar.setVisibility(View.VISIBLE);
 
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getSearchURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getSearchURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 SBind.progressBar.setVisibility(View.GONE);
@@ -93,7 +95,10 @@ public class SearchFragment extends Fragment {
 
                         JSONArray resArr = res.getJSONArray("results");
                         if( resArr.length() < 1){
-                            Toast.makeText(getContext(), "0 results found.", Toast.LENGTH_SHORT).show();
+                            adapter.setList(new ArrayList<PersonItem>());
+                            SBind.emptyTitle.setText("No results");
+                            SBind.emptyHint.setText("Try another name or e-mail.");
+                            SBind.emptyState.setVisibility(View.VISIBLE);
                         }
                         else{
                             ArrayList<PersonItem> l = new ArrayList<PersonItem>();
@@ -107,12 +112,14 @@ public class SearchFragment extends Fragment {
                                     item.setUserID(r.getInt("userID"));
                                     item.setSubTitle(r.getString("userEmail"));
                                     item.setTitle(r.getString("userName"));
+                                    item.setAvatar(Api.str(r, "avatar"));
 
                                     l.add(item);
                                 }
                             }
                             adapter.setList(l);
                             SBind.recyclerSearch.setAdapter(adapter);
+                            SBind.emptyState.setVisibility(View.GONE);
                         }
 
                     }

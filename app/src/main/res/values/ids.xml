@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- tag of an avatar view: the picture it is waiting for, so a recycled view ignores a late answer -->
+    <item name="avatar_request" type="id" />
+</resources>

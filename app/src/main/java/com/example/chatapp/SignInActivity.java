@@ -40,7 +40,7 @@ public class SignInActivity extends AppCompatActivity {
 
         }
 
-        getSupportActionBar().hide();
+        if (getSupportActionBar() != null) getSupportActionBar().hide();  // the theme has no action bar
         SIBinding = ActivitySigninBinding.inflate(getLayoutInflater());
         setContentView(SIBinding.getRoot());
 
@@ -88,7 +88,8 @@ public class SignInActivity extends AppCompatActivity {
                     else{
                         Toast.makeText(SignInActivity.this, "Sign in successful" , Toast.LENGTH_SHORT).show();
                         User user = User.getInstance(getApplicationContext());
-                        user.userLogin(res.getInt("userID"), res.getString("userEmail"), res.getString("userName"));
+                        user.userLogin(res.getInt("userID"), res.getString("userEmail"), res.getString("userName"), res.getString("token"));
+                        user.setAvatar(Api.str(res, "avatar"));
                         Intent i = new Intent(getApplicationContext(), MainActivity.class);
                         startActivity(i);
                         finish();

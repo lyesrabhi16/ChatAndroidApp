@@ -1,17 +1,27 @@
 package com.example.chatapp;
 
-import android.content.Context;
-
 import java.net.URISyntaxException;
+import java.util.Collections;
 
 import io.socket.client.IO;
 import io.socket.client.Socket;
-import io.socket.emitter.Emitter;
 
+/**
+ * The one Socket.IO connection of the app, shared by the main screen and the conversation screen.
+ *
+ * It outlives a single activity: a rotation or a dark-mode switch recreates the activities but must not cut the
+ * connection. It is closed for good only when the user leaves the app or signs out (see closeSocket()).
+ */
 public class SocketClient {
     private static Socket socket;
+    // true once closeSocket() has been called: a disconnected socket never reconnects by itself after that
+    private static boolean closed = true;
 
-    public static Socket getSocket() {
+    /** The live connection, opened on demand. */
+    public static synchronized Socket getSocket() {
+        if (socket == null || closed) {
+            return connectSocket();
+        }
         return socket;
     }
 
@@ -19,10 +29,22 @@ public class SocketClient {
         SocketClient.socket = socket;
     }
 
-    public static Socket connectSocket(){
+    /** Returns the current connection, or opens a new one when there is none (or it was closed). */
+    public static synchronized Socket connectSocket(){
+        if (socket != null && !closed) {
+            return socket;
+        }
         try {
-            socket = IO.socket(Configs.getSocketURL());
+            // the server only accepts connections that present the token issued at sign in
+            IO.Options options = new IO.Options();
+            User user = User.peek();
+            if (user != null && user.getToken() != null) {
+                options.auth = Collections.singletonMap("token", user.getToken());
+            }
+            socket = IO.socket(Configs.getSocketURL(), options);
+            ChatEvents.attach(socket);
             socket.connect();
+            closed = false;
 
             socket.emit("message", "hello from client");
 
@@ -32,12 +54,11 @@ public class SocketClient {
             return null;
         }
     }
-    public static void closeSocket(){
+
+    public static synchronized void closeSocket(){
+        closed = true;
         if(socket == null) return;
-        if(socket.connected())
-        {
-            socket.off();
-            socket.disconnect();
-        }
+        socket.off();
+        socket.disconnect();
     }
 }

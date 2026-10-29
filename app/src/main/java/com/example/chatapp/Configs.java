@@ -1,8 +1,8 @@
 package com.example.chatapp;
 
 public class Configs {
-    //192.168.43.147
-    private static String IP = "192.168.43.147";
+    // Set at build time: ./gradlew assembleDebug -PchatServerHost=<server IP>  (default 10.0.2.2, the emulator's host)
+    private static String IP = BuildConfig.SERVER_HOST;
     private static String socketURL = "http://"+IP+":8000/";
     private static String serverURL = "http://"+IP+":8001";
     private static String signupURL = serverURL + "/signup";
