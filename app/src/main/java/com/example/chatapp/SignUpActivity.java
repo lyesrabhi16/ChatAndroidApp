@@ -110,6 +110,7 @@ public class SignUpActivity extends AppCompatActivity {
                     }
                     else{
                         Toast.makeText(SignUpActivity.this, "Sign up successful" , Toast.LENGTH_SHORT).show();
+                        User.getInstance(getApplicationContext()).setToken(res.getString("token"));  // the next request (/user) needs it
                         setUser(res.getInt("userID"));
                     }
 
@@ -143,7 +144,7 @@ public class SignUpActivity extends AppCompatActivity {
         ProgressDialog prgrs = new ProgressDialog(SignUpActivity.this);
         prgrs.setMessage("Attempting Sign In...");
         prgrs.show();
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getUserURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getUserURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 prgrs.dismiss();
@@ -156,7 +157,7 @@ public class SignUpActivity extends AppCompatActivity {
                     else{
                         Toast.makeText(SignUpActivity.this, "Sign in successful" , Toast.LENGTH_SHORT).show();
                         User user = User.getInstance(getApplicationContext());
-                        user.userLogin(res.getInt("userID"), res.getString("userEmail"), res.getString("userName"));
+                        user.userLogin(res.getInt("userID"), res.getString("userEmail"), res.getString("userName"), user.getToken());
                         Intent i = new Intent(getApplicationContext(), MainActivity.class);
                         startActivity(i);
                         finish();

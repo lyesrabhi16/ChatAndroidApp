@@ -3,6 +3,7 @@ package com.example.chatapp;
 import android.content.Context;
 
 import java.net.URISyntaxException;
+import java.util.Collections;
 
 import io.socket.client.IO;
 import io.socket.client.Socket;
@@ -21,7 +22,13 @@ public class SocketClient {
 
     public static Socket connectSocket(){
         try {
-            socket = IO.socket(Configs.getSocketURL());
+            // the server only accepts connections that present the token issued at sign in
+            IO.Options options = new IO.Options();
+            User user = User.peek();
+            if (user != null && user.getToken() != null) {
+                options.auth = Collections.singletonMap("token", user.getToken());
+            }
+            socket = IO.socket(Configs.getSocketURL(), options);
             socket.connect();
 
             socket.emit("message", "hello from client");

@@ -116,7 +116,7 @@ public class AccountActivity extends AppCompatActivity {
 
     }
     private void getUser(int id){
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getUserURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getUserURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {

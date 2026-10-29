@@ -88,7 +88,7 @@ public class ChatsFragment extends Fragment {
 
     private void getChats(int userID) {
         BChats.progressBar.setVisibility(View.VISIBLE);
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getChatsURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getChatsURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {

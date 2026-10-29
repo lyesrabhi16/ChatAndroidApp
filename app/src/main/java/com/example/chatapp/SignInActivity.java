@@ -88,7 +88,7 @@ public class SignInActivity extends AppCompatActivity {
                     else{
                         Toast.makeText(SignInActivity.this, "Sign in successful" , Toast.LENGTH_SHORT).show();
                         User user = User.getInstance(getApplicationContext());
-                        user.userLogin(res.getInt("userID"), res.getString("userEmail"), res.getString("userName"));
+                        user.userLogin(res.getInt("userID"), res.getString("userEmail"), res.getString("userName"), res.getString("token"));
                         Intent i = new Intent(getApplicationContext(), MainActivity.class);
                         startActivity(i);
                         finish();

@@ -79,7 +79,7 @@ public class SearchFragment extends Fragment {
     private void search(String query) {
         SBind.progressBar.setVisibility(View.VISIBLE);
 
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getSearchURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getSearchURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 SBind.progressBar.setVisibility(View.GONE);

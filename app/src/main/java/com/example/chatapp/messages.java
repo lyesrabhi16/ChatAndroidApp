@@ -81,7 +81,7 @@ public class messages {
     public static void loadMessages(int userID, int friendID, String  R_userName, Context ctx, onRequestFinish Req){
 
 
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getMessagesURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getMessagesURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {

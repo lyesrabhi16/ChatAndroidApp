@@ -77,7 +77,7 @@ public class PeopleFragment extends Fragment {
 
     private void getFriends(int userID) {
         BPeople.progressBarPeople.setVisibility(View.VISIBLE);
-        StringRequest Sreq = new StringRequest(Request.Method.POST, Configs.getFriendsURL(), new Response.Listener<String>() {
+        StringRequest Sreq = new AuthRequest(Request.Method.POST, Configs.getFriendsURL(), new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {
