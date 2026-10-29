@@ -2,27 +2,32 @@
 
 
 
-const 
+const
     argon2 = require("argon2"),
     express = require('express'),
     app = express(),
-    port = 8001,
-    dbc = require('mysql').createConnection({
-        host:"localhost",
-        user:"root",
-        password:"",
-        database:"ChatDB"
+    // Configuration comes from environment variables; the defaults match a local XAMPP/MySQL setup.
+    port = Number(process.env.PORT || 8001),
+    socketPort = Number(process.env.SOCKET_PORT || 8000),
+    // A pool reconnects by itself when MySQL restarts (a single connection would stay dead).
+    dbc = require('mysql2').createPool({
+        host: process.env.DB_HOST || "localhost",
+        port: Number(process.env.DB_PORT || 3306),
+        user: process.env.DB_USER || "root",
+        password: process.env.DB_PASSWORD || "",
+        database: process.env.DB_NAME || "ChatDB",
+        connectionLimit: 10
     });
 
-dbc.connect(err => {
-        if (err) console.info("failed to connect to DB. ",err);
+dbc.query("SELECT 1", err => {
+        if (err) console.info("failed to connect to DB. ",err.code || err);
         else{
             console.info("DB connected.");
         }
 });
 
 app.use(express.json());
-app.use(require('body-parser').urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false }));
 
 app.post("/signup", async (req, res) => {
     
@@ -222,32 +227,54 @@ app.post("/search",(req, res) => {
         return;
     }
 
-    let 
+    // The table and columns are chosen by the client, so they are checked against a whitelist; every value
+    // goes through a bound parameter (they used to be pasted into the SQL text: an SQL injection).
+    const SEARCH_TABLE = "users", SEARCH_COLUMNS = ["userName", "userEmail"];
+    let
         response = undefined,
-        table = req.body["searchTable"],
-        cols = req.body["searchCols"],
-        term = req.body["searchTerm"],
-        termWords = term.split(" "),
+        table = String(req.body["searchTable"]),
+        colList = String(req.body["searchCols"]).split(",").map(c => c.trim()),
+        term = String(req.body["searchTerm"]);
+
+    if (table !== SEARCH_TABLE || colList.length === 0 || !colList.every(c => SEARCH_COLUMNS.includes(c))) {
+        let message = "invalid parameter : searchTable or searchCols";
+        console.error(message);
+        res.json({error : message});
+        return;
+    }
+
+    // full-text operators in the user's words (+ - < > ( ) ~ * " @) are dropped, they are not part of a name
+    let termWords = term.split(" ").map(w => w.replace(/[+\-<>()~*"@]/g, "")).filter(w => w.length > 0);
+    if (termWords.length === 0) {
+        res.json({results : []});
+        return;
+    }
+
+    let
+        cols = colList.join(","),  // identifiers from the whitelist above
+        likePattern = w => "%" + w.replace(/[\\%_]/g, "\\$&") + "%",
+        conditions = termWords.map(() => colList.map(c => "CONVERT(" + c + " USING utf8) LIKE ?").join(" OR ")).join(" OR "),
+        params = [
+            '"' + termWords.join(" ") + '"',                    // exact phrase
+            termWords.map(w => "+" + w).join(" "),              // all the words
+            termWords.join(" "),                                // some of the words
+            termWords.map(w => w + "*").join(" "),              // word prefixes
+            ...termWords.flatMap(w => colList.map(() => likePattern(w)))
+        ],
         sql = `SELECT t.userID, t.userName, t.userEmail FROM
             (SELECT *,
-             MATCH(${cols}) Against('"${term}"' in boolean mode) score_exact,
-             MATCH(${cols}) Against('${termWords.map(w => w = "+"+w).toString().replace(",", " ")}' in boolean mode) score_all,
-             MATCH(${cols}) Against('${termWords.toString().replace(",", " ")}' in boolean mode) score_some,
-             MATCH(${cols}) Against('${termWords.map(w => w = w+"*").toString().replace(",", " ")}' in boolean mode) score_pre
-             FROM  (
-                SELECT userID, userName, userEmail FROM (
-                    SELECT * FROM ${table} WHERE (
-                        ${termWords.map((term) => cols.split(",")
-                            .map((w)=> w = "CONVERT("+w+" USING utf8) LIKE '%"+term+"%'")
-                                                            .toString().replace(",", " OR "))
-                                                                                    .toString().replace(",", " OR ")})
-                ) as t
-            ) as f
-             ORDER BY score_exact DESC, score_all DESC, score_some DESC, score_pre DESC
-            ) as t`.replace(/\n/g, " ");
-    
+             MATCH(${cols}) AGAINST(? IN BOOLEAN MODE) score_exact,
+             MATCH(${cols}) AGAINST(? IN BOOLEAN MODE) score_all,
+             MATCH(${cols}) AGAINST(? IN BOOLEAN MODE) score_some,
+             MATCH(${cols}) AGAINST(? IN BOOLEAN MODE) score_pre
+             FROM (
+                SELECT userID, userName, userEmail FROM users WHERE (${conditions})
+             ) as f
+            ) as t
+            ORDER BY t.score_exact DESC, t.score_all DESC, t.score_some DESC, t.score_pre DESC
+            LIMIT 100`.replace(/\n/g, " ");
 
-    dbc.query(sql, (err, results)=>{
+    dbc.query(sql, params, (err, results)=>{
         if (err){
             response = {error : ""+ err.code};
             res.json(response);
@@ -387,7 +414,7 @@ app.post("/messages/send", (req, res)=>{
     }
 
     let
-        response = undefined;
+        response = undefined,
         message = {
             sender : req.body["sender"],
             receiver : req.body["receiver"],
@@ -555,7 +582,7 @@ app.listen(port, ()=> console.info("express server listening on port "+port));
 
 //server
 const {Server} = require("socket.io"),
-    server = new Server(8000);
+    server = new Server(socketPort);
 
 // clients is an array of client objects
 // client = { 
@@ -595,8 +622,28 @@ server.on("connection", (socket) => {
     })
 
     socket.on("chat message", (data_raw)=>{
-    
-        let data = JSON.parse(data_raw);
+
+        // Anything a client sends is untrusted: a malformed payload must not crash the whole server.
+        let data;
+        try {
+            data = JSON.parse(data_raw);
+        } catch (e) {
+            console.info(`client [${socket.id}] sent an invalid message, ignored`);
+            return;
+        }
+        if (data === null || typeof data !== "object"
+            || !Number.isInteger(Number(data["sender"])) || !Number.isInteger(Number(data["receiver"]))
+            || typeof data["content"] !== "string" || data["content"].length === 0) {
+            console.info(`client [${socket.id}] sent an incomplete message, ignored`);
+            return;
+        }
+        // only the known columns are written, whatever else the client included
+        data = {
+            sender : Number(data["sender"]),
+            receiver : Number(data["receiver"]),
+            content : data["content"],
+            date : typeof data["date"] === "string" ? data["date"] : new Date()
+        };
         console.info(`client [${socket.id}] sends: [${data_raw}]`);
         clients.forEach((client) => {
 
