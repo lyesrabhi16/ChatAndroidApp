@@ -14,6 +14,11 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Address of the machine running the chat server. 10.0.2.2 is the host as seen from the Android emulator;
+        // for a real phone use the computer's LAN IP:  ./gradlew assembleDebug -PchatServerHost=192.168.1.20
+        // (or put chatServerHost=... in ~/.gradle/gradle.properties).
+        buildConfigField "String", "SERVER_HOST", "\"${project.findProperty('chatServerHost') ?: '10.0.2.2'}\""
     }
 
     buildTypes {
@@ -28,6 +33,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 
