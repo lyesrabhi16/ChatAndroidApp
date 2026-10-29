@@ -83,6 +83,9 @@ public class ChatsFragment extends Fragment {
         BChats.recyclerChats.setAdapter(adapter);
         BChats.emptyState.setVisibility(View.GONE);
         BChats.fabNewGroup.setOnClickListener(v -> startActivity(new Intent(getContext(), GroupCreateActivity.class)));
+        Cache.conversations(requireContext(), cached -> {
+            if (cached != null && BChats != null && adapter.getItemCount() == 0) show(cached);
+        });
         return BChats.getRoot();
     }
 
@@ -124,15 +127,9 @@ public class ChatsFragment extends Fragment {
                 done();
                 if (BChats == null) return;
                 BChats.progressBar.setVisibility(View.GONE);
-                User user = User.getInstance(requireContext());
                 JSONArray conversations = json.optJSONArray("conversations");
-                ArrayList<PersonItem> list = new ArrayList<>();
-                for (int i = 0; conversations != null && i < conversations.length(); i++) {
-                    JSONObject c = conversations.optJSONObject(i);
-                    if (c != null) list.add(toItem(c, user.getUserID()));
-                }
-                adapter.setList(list);
-                BChats.emptyState.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
+                Cache.saveConversations(requireContext(), conversations);
+                show(conversations);
             }
 
             @Override
@@ -143,6 +140,17 @@ public class ChatsFragment extends Fragment {
                 Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void show(JSONArray conversations) {
+        User user = User.getInstance(requireContext());
+        ArrayList<PersonItem> list = new ArrayList<>();
+        for (int i = 0; conversations != null && i < conversations.length(); i++) {
+            JSONObject c = conversations.optJSONObject(i);
+            if (c != null) list.add(toItem(c, user.getUserID()));
+        }
+        adapter.setList(list);
+        BChats.emptyState.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
     private void done() {

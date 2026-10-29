@@ -192,6 +192,12 @@ function connect(token) {
     const upAudio = (await upload(tA, "voice.m4a", "audio/mp4", Buffer.from("fake audio bytes"))).body;
     const voice = await post("/messages/send", { receiver: bob.userID, type: "audio", attachment: upAudio.attachment, duration: 4200 }, tA);
     check("a voice note is sent with its duration", voice.message && voice.message.type === "audio" && voice.message.duration === 4200, JSON.stringify(voice));
+    const upWave = (await upload(tA, "wave.m4a", "audio/mp4", Buffer.from("w"))).body;
+    const waved = await post("/messages/send", { receiver: bob.userID, type: "audio", attachment: upWave.attachment, duration: 1500, waveform: [0, 10, 55, 100, 40] }, tA);
+    check("a voice note keeps its waveform", JSON.stringify(waved.message.waveform) === "[0,10,55,100,40]", JSON.stringify(waved));
+    const upBad = (await upload(tA, "bad.m4a", "audio/mp4", Buffer.from("b"))).body;
+    check("an invalid waveform is ignored, not stored", (await post("/messages/send", { receiver: bob.userID, type: "audio", attachment: upBad.attachment, waveform: [1, 500, "x"] }, tA)).message.waveform === null);
+    check("the waveform is in the history too", (await post("/messages", { userID1: alice.userID, userID2: bob.userID, limit: 100 }, tA)).messages.some(m => Array.isArray(m.waveform) && m.waveform.length === 5));
     const upBig = (await upload(tA, "long.m4a", "audio/mp4", Buffer.from("x"))).body;
     check("a voice note longer than 10 minutes gets no duration", (await post("/messages/send", { receiver: bob.userID, type: "audio", attachment: upBig.attachment, duration: 99999999 }, tA)).message.duration === null);
 

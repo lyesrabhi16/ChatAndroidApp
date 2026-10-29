@@ -49,6 +49,15 @@ public final class VoiceRecorder {
         }
     }
 
+    /** The loudest sound since the last call, 0..32767 (0 when not recording). */
+    public int amplitude() {
+        try {
+            return recorder == null ? 0 : recorder.getMaxAmplitude();
+        } catch (RuntimeException e) {
+            return 0;
+        }
+    }
+
     public long elapsed() {
         return recorder == null ? 0 : SystemClock.elapsedRealtime() - startedAt;
     }

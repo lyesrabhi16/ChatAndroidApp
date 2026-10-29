@@ -111,14 +111,11 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <ProgressBar
-                    android:id="@+id/audio_progress"
-                    style="?android:attr/progressBarStyleHorizontal"
+                <com.example.chatapp.WaveformView
+                    android:id="@+id/audio_wave"
                     android:layout_width="match_parent"
-                    android:layout_height="4dp"
-                    android:max="1000"
-                    android:progressBackgroundTint="#44808080"
-                    android:progressTint="?attr/colorOnPrimary" />
+                    android:layout_height="32dp"
+                    app:barColor="?attr/colorOnPrimary" />
 
                 <TextView
                     android:id="@+id/audio_time"

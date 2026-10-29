@@ -69,6 +69,7 @@ module.exports = async function migrate(pool) {
     await addColumn("messages", "fileName", "varchar(255) NULL");
     await addColumn("messages", "fileSize", "int NULL");
     await addColumn("messages", "duration", "int NULL");                           // audio, in milliseconds
+    await addColumn("messages", "waveform", "varchar(400) NULL");                  // voice note loudness, comma-separated 0..100
     await addColumn("messages", "replyTo", "int NULL");
     await addColumn("messages", "editedAt", "datetime NULL");
     await addColumn("messages", "deletedAt", "datetime NULL");

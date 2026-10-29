@@ -66,6 +66,7 @@ public final class User {
 
     public boolean logout(){
         SocketClient.closeSocket();  // the connection belongs to the user who signed in
+        Cache.clear(Ctx);  // the next person to sign in must not see these conversations
         SharedPreferences.Editor editor = prefs().edit();
         editor.clear();
         editor.apply();

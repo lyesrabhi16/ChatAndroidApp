@@ -23,6 +23,7 @@ public class ChatItem {
     private String senderName, msgType = TEXT, message = "", attachment, fileName, date;
     private boolean edited, deleted, read;
     private Reply reply;
+    private float[] waveform;
 
     /** `myID` decides the side of the bubble. */
     public static ChatItem fromJson(JSONObject m, int myID) {
@@ -38,6 +39,7 @@ public class ChatItem {
         item.fileName = Api.str(m, "fileName");
         item.fileSize = m.optInt("fileSize");
         item.duration = m.optInt("duration");
+        item.waveform = Waveforms.fromJson(m.optJSONArray("waveform"));
         item.replyTo = m.isNull("replyTo") ? -1 : m.optInt("replyTo", -1);
         item.edited = m.optBoolean("edited");
         item.deleted = m.optBoolean("deleted");
@@ -88,6 +90,10 @@ public class ChatItem {
     public boolean isDeleted() { return deleted; }
     public boolean isRead() { return read; }
     public Reply getReply() { return reply; }
+    /** The loudness bars of a voice message: the recorded ones, or a stand-in for a message that has none. */
+    public float[] getWaveform() {
+        return waveform != null ? waveform : Waveforms.pseudo(messageID, Waveforms.BARS);
+    }
 
     public void setRead(boolean read) { this.read = read; }
 }

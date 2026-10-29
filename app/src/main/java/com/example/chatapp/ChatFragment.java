@@ -66,6 +66,8 @@ public class ChatFragment extends AppCompatActivity {
     private ChatItemAdapter adapter;
     private LinearLayoutManager layoutManager;
     private boolean hasMore, loading;
+    private String cacheKey;
+    private boolean showingCache;
 
     private ChatItem replyTarget, editTarget;
 
@@ -75,14 +77,18 @@ public class ChatFragment extends AppCompatActivity {
     private final Runnable stopTyping = () -> sendTyping(false);
 
     private VoiceRecorder recorder;
+    private final List<Float> recordedLevels = new ArrayList<>();   // one per tick, kept to draw the sent message
     private final Runnable recordingTick = new Runnable() {
         @Override
         public void run() {
             if (recorder == null) return;
             long elapsed = recorder.elapsed();
             b.recordingTime.setText(Media.clock(elapsed));
+            float level = Waveforms.level(recorder.amplitude());
+            recordedLevels.add(level);
+            b.recordingWave.push(level);
             if (elapsed >= VoiceRecorder.MAX_MS) finishRecording(true);
-            else handler.postDelayed(this, 200);
+            else handler.postDelayed(this, 60);
         }
     };
 
@@ -104,6 +110,7 @@ public class ChatFragment extends AppCompatActivity {
         @Override
         public void onChatMessage(JSONObject message) {
             if (!belongsHere(message)) return;
+            Cache.saveMessage(ChatFragment.this, cacheKey, message);
             ChatItem item = ChatItem.fromJson(message, myID);
             boolean added = addIfNew(item);
             if (added && item.getType() == ChatItem.RECEIVER) {
@@ -116,6 +123,7 @@ public class ChatFragment extends AppCompatActivity {
         @Override
         public void onMessageUpdated(JSONObject message) {
             if (!belongsHere(message)) return;
+            Cache.saveMessage(ChatFragment.this, cacheKey, message);
             ChatItem updated = ChatItem.fromJson(message, myID);
             int index = adapter.indexOf(updated.getMessageID());
             if (index < 0) return;
@@ -216,6 +224,7 @@ public class ChatFragment extends AppCompatActivity {
 
         b.chatTitle.setText(title);
         Avatars.apply(b.chatHeaderAvatar, title, isGroup ? null : peerAvatar);
+        cacheKey = Cache.key(isGroup, isGroup ? groupID : peerID);
 
         adapter = new ChatItemAdapter(myID, new ChatItemAdapter.Actions() {
             @Override
@@ -262,10 +271,10 @@ public class ChatFragment extends AppCompatActivity {
         });
 
         pickPhoto = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-            if (uri != null) Attachments.photo(this, uri, attachmentReady(ChatItem.IMAGE, 0));
+            if (uri != null) Attachments.photo(this, uri, attachmentReady(ChatItem.IMAGE, 0, null));
         });
         pickDocument = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-            if (uri != null) Attachments.document(this, uri, attachmentReady(ChatItem.FILE, 0));
+            if (uri != null) Attachments.document(this, uri, attachmentReady(ChatItem.FILE, 0, null));
         });
         askMicrophone = registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
             if (granted) startRecording();
@@ -315,6 +324,15 @@ public class ChatFragment extends AppCompatActivity {
             }
         });
 
+        // what was saved last time shows at once; the server's answer then replaces it
+        Cache.messages(this, cacheKey, cached -> {
+            if (cached.isEmpty() || adapter.getItemCount() > 0 || isDestroyed()) return;
+            List<ChatItem> items = new ArrayList<>();
+            for (JSONObject m : cached) items.add(ChatItem.fromJson(m, myID));
+            showingCache = true;
+            adapter.setList(items);
+            b.recylcerChat.scrollToPosition(items.size() - 1);
+        });
         loadHeader();
         loadPage(null);
     }
@@ -428,10 +446,12 @@ public class ChatFragment extends AppCompatActivity {
                 loading = false;
                 b.progressBar2.setVisibility(View.GONE);
                 List<ChatItem> page = parse(json.optJSONArray("messages"));
+                if (before == null) Cache.saveMessages(ChatFragment.this, cacheKey, json.optJSONArray("messages"));
                 if (before != null) {
                     hasMore = json.optBoolean("hasMore");
                     prependKeepingPosition(page);
-                } else if (adapter.getItemCount() == 0) {
+                } else if (adapter.getItemCount() == 0 || showingCache) {
+                    showingCache = false;
                     hasMore = json.optBoolean("hasMore");
                     adapter.setList(page);
                     if (!page.isEmpty()) b.recylcerChat.scrollToPosition(page.size() - 1);
@@ -445,7 +465,7 @@ public class ChatFragment extends AppCompatActivity {
             public void onError(String message) {
                 loading = false;
                 b.progressBar2.setVisibility(View.GONE);
-                toast(message);
+                toast(showingCache ? "Offline: showing saved messages" : message);
             }
         });
     }
@@ -568,7 +588,7 @@ public class ChatFragment extends AppCompatActivity {
     }
 
     /** What to do once a photo, document or recording has been read: upload it, then send the message. */
-    private Attachments.Callback attachmentReady(String type, int durationMs) {
+    private Attachments.Callback attachmentReady(String type, int durationMs, @Nullable JSONArray waveform) {
         return new Attachments.Callback() {
             @Override
             public void onPicked(Attachments.Picked picked) {
@@ -580,6 +600,7 @@ public class ChatFragment extends AppCompatActivity {
                         try {
                             body.put("attachment", json.getString("attachment"));
                             if (durationMs > 0) body.put("duration", durationMs);
+                            if (waveform != null) body.put("waveform", waveform);
                         } catch (JSONException e) {
                             b.progressBar2.setVisibility(View.GONE);
                             return;
@@ -754,7 +775,9 @@ public class ChatFragment extends AppCompatActivity {
         b.inputRow.setVisibility(View.GONE);
         b.recordingBar.setVisibility(View.VISIBLE);
         b.recordingTime.setText("0:00");
-        handler.postDelayed(recordingTick, 200);
+        recordedLevels.clear();
+        b.recordingWave.clearLive();
+        handler.postDelayed(recordingTick, 60);
     }
 
     private void finishRecording(boolean send) {
@@ -776,7 +799,7 @@ public class ChatFragment extends AppCompatActivity {
             return;
         }
         Attachments.local(result.file, "audio/mp4", "voice-" + System.currentTimeMillis() + ".m4a",
-                attachmentReady(ChatItem.AUDIO, (int) result.durationMs));
+                attachmentReady(ChatItem.AUDIO, (int) result.durationMs, Waveforms.downsample(recordedLevels, Waveforms.BARS)));
     }
 
     // ---- playing and opening attachments -------------------------------------------------------------------------

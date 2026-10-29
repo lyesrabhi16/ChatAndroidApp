@@ -31,6 +31,12 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    defaultConfig {
+        javaCompileOptions { annotationProcessorOptions { arguments += ["room.schemaLocation": "$projectDir/schemas".toString()] } }
+    }
+    testOptions {
+        unitTests.returnDefaultValues = true   // android.os.Handler etc. are inert stubs in plain JVM tests
+    }
     buildFeatures {
         viewBinding true
         buildConfig true
@@ -44,6 +50,9 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.annotation:annotation:1.5.0'
     implementation 'androidx.exifinterface:exifinterface:1.3.6'   // rotates photos upright before they are sent
+    // offline cache of conversations and recent messages
+    implementation 'androidx.room:room-runtime:2.5.2'
+    annotationProcessor 'androidx.room:room-compiler:2.5.2'
     implementation 'androidx.navigation:navigation-fragment:2.5.3'
     implementation 'androidx.navigation:navigation-ui:2.5.3'
     testImplementation 'junit:junit:4.13.2'

@@ -23,6 +23,7 @@ module.exports = function messaging({ app, dbc, requireAuth, emitToUsers, isOnli
             fileName: deleted ? null : row.fileName,
             fileSize: deleted ? null : row.fileSize,
             duration: row.duration,
+            waveform: row.waveform ? row.waveform.split(",").map(Number) : null,
             replyTo: row.replyTo,
             edited: row.editedAt != null,
             deleted,
@@ -122,6 +123,11 @@ module.exports = function messaging({ app, dbc, requireAuth, emitToUsers, isOnli
             if (type === "audio") {
                 const duration = Number(data.duration);
                 row.duration = Number.isInteger(duration) && duration >= 0 && duration <= MAX_AUDIO_MS ? duration : null;
+                // the loudness of the recording, drawn as bars by the apps: at most 100 whole numbers from 0 to 100
+                const wave = data.waveform;
+                if (Array.isArray(wave) && wave.length > 0 && wave.length <= 100 && wave.every(v => Number.isInteger(v) && v >= 0 && v <= 100)) {
+                    row.waveform = wave.join(",");
+                }
             }
         }
 

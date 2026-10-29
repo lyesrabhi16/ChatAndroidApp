@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -209,7 +208,8 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ViewHo
     private void bindAudio(ViewHolder holder, ChatItem item) {
         boolean current = item.getMessageID() == playingID;
         holder.audioPlay.setImageResource(current && playing ? R.drawable.ic_pause : R.drawable.ic_play);
-        holder.audioProgress.setProgress(current ? Math.round(playProgress * 1000) : 0);
+        holder.audioWave.setBars(item.getWaveform());
+        holder.audioWave.setProgress(current && (playing || playProgress > 0) ? playProgress : -1f);
         long duration = item.getDuration();
         holder.audioTime.setText(current && playProgress > 0
                 ? Media.clock((long) (duration * playProgress)) + " / " + Media.clock(duration)
@@ -226,7 +226,7 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ViewHo
         final TextView body, header, footer, replyName, replyText, audioTime, fileName, fileSize;
         final ImageView image;
         final ImageButton audioPlay;
-        final ProgressBar audioProgress;
+        final WaveformView audioWave;
 
         public ViewHolder(View view) {
             super(view);
@@ -240,7 +240,7 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ViewHo
             image = view.findViewById(R.id.image);
             audioRow = view.findViewById(R.id.audio_row);
             audioPlay = view.findViewById(R.id.audio_play);
-            audioProgress = view.findViewById(R.id.audio_progress);
+            audioWave = view.findViewById(R.id.audio_wave);
             audioTime = view.findViewById(R.id.audio_time);
             fileRow = view.findViewById(R.id.file_row);
             fileName = view.findViewById(R.id.file_name);
