@@ -22,7 +22,7 @@ Node.js server (Express, Socket.IO, Argon2) ──► MySQL 8 (users, friends, m
 
 ```bash
 docker compose up --build        # MySQL 8 with the sample database + the server (ports 8001 and 8000)
-npm install && npm run smoke     # 54 end-to-end checks against the running server
+npm install && npm run smoke     # 56 end-to-end checks against the running server
 ```
 
 The sample database (`chatdb.sql`) contains a few test accounts whose passwords are not documented: create your own account from the app or with `POST /signup`.
@@ -83,12 +83,12 @@ All routes are `POST` with a JSON or form body and answer with JSON; a failure i
 | `/friends/add`, `/friends/remove` | `userID1`, `userID2` | `messages`: the database result (`affectedRows` is `1` on success) |
 | `/chats` | `userID` | `messages`: the user's messages, each with the name and e-mail of the person involved (the app turns them into the conversation list) |
 | `/messages` | `userID1`, `userID2` | `messages`: the conversation |
-| `/messages/send` | `sender`, `receiver`, `content`, `date` | `messageID` |
+| `/messages/send` | `sender`, `receiver`, `content` | `messageID` (the server stamps the time) |
 
 ## Tests
 
 ```bash
-npm run smoke                                          # 54 checks: API, authentication, authorization, SQL injection, real time
+npm run smoke                                          # 56 checks: API, authentication, authorization, SQL injection, real time
 CHAT_SERVER_HOST=localhost ./gradlew testDebugUnitTest # the app's own Socket.IO client against the server's token check
 ```
 
@@ -98,7 +98,7 @@ Both need the server running (`docker compose up --build`); the Gradle test is s
 
 1. The client connects with its token in the handshake (`auth: {token}`; `?token=` also works). Without a valid token the connection is refused with `authentication required`.
 2. On connection the server emits `init request`; the client answers `init` (the user is the one named by the token; an id sent by the client is ignored).
-3. To send, the client emits `chat message` with a JSON string `{"sender", "receiver", "content", "date"}`. `sender` must be the authenticated user, otherwise the message is dropped.
+3. To send, the client emits `chat message` with a JSON string `{"sender", "receiver", "content"}` (a `date` is accepted but ignored: the server stamps the time). `sender` must be the authenticated user, otherwise the message is dropped.
 4. The server forwards it to the sender's and the receiver's connected devices as `chat message` and saves it.
 
 Malformed or incomplete payloads are ignored.

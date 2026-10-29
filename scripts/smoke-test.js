@@ -94,7 +94,11 @@ function connect(token) {
 
     console.log("messages over HTTP");
     check("send a message", Number.isInteger((await post("/messages/send", { sender: alice.userID, receiver: bob.userID, content: "secret hello", date: "2026-01-01 10:00:00" }, tA)).messageID));
-    check("you cannot send as someone else", (await call("/messages/send", { sender: bob.userID, receiver: alice.userID, content: "forged", date: "2026-01-01 10:00:00" }, tA)).status === 403);
+    await post("/messages/send", { sender: alice.userID, receiver: bob.userID, content: "dated 1999", date: "1999-01-01 00:00:00" }, tA);
+    const stamped = (await post("/messages", { userID1: alice.userID, userID2: bob.userID }, tA)).messages.find(m => m.content === "dated 1999");
+    check("the server stamps the time itself (the client's date is ignored)", stamped !== undefined && new Date(stamped.date).getFullYear() >= 2026, JSON.stringify(stamped));
+    check("a message without a date is accepted", Number.isInteger((await post("/messages/send", { sender: alice.userID, receiver: bob.userID, content: "no date" }, tA)).messageID));
+    check("you cannot send as someone else",(await call("/messages/send", { sender: bob.userID, receiver: alice.userID, content: "forged", date: "2026-01-01 10:00:00" }, tA)).status === 403);
     check("non-string content is refused", (await post("/messages/send", { sender: alice.userID, receiver: bob.userID, content: { a: 1 }, date: "2026-01-01 10:00:00" }, tA)).error === "invalid parameters");
     check("the sender reads the thread", JSON.stringify(await post("/messages", { userID1: alice.userID, userID2: bob.userID }, tA)).includes("secret hello"));
     check("the receiver reads the thread", JSON.stringify(await post("/messages", { userID1: bob.userID, userID2: alice.userID }, tB)).includes("secret hello"));

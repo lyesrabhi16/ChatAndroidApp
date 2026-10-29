@@ -497,7 +497,7 @@ app.post("/messages", requireAuth, participant("userID1", "userID2"), (req, res)
 
 });
 
-app.post("/messages/send", requireAuth, asSelf("sender"), mustBeIntegers("receiver"), mustBeStrings("content", "date"), (req, res)=>{
+app.post("/messages/send", requireAuth, asSelf("sender"), mustBeIntegers("receiver"), mustBeStrings("content"), (req, res)=>{
     if(req.body["sender"] === undefined){
         let message = "missing parameter : sender"
         console.error(message);
@@ -522,22 +522,14 @@ app.post("/messages/send", requireAuth, asSelf("sender"), mustBeIntegers("receiv
         );
         return;
     }
-    if(req.body["date"] === undefined){
-        let message = "missing parameter : date"
-        console.error(message);
-        res.json(
-            {error : message}
-        );
-        return;
-    }
-
     let
         response = undefined,
         message = {
             sender : req.body["sender"],
             receiver : req.body["receiver"],
             content : req.body["content"],
-            date : req.body["date"]
+            // the server stamps the time: a client's clock (or time zone) must not decide the order of a conversation
+            date : new Date()
         },
         sql = "INSERT INTO messages SET ?";
     
@@ -728,20 +720,17 @@ server.on("connection", (socket) => {
     
     socket.emit("message","hello from server");
     socket.emit("init request");
-    // The user is whoever the token says; an id sent by the client is ignored (kept as an event for older clients).
-    socket.on("init", ()=>{
 
-        for (const known of clients) if (known.socket === socket) return;
-        let client = {
-            socket : socket,
-            userID : socket.userID
-        };
-        clients.add(client);
-        console.info("Client connected : " + `[${client.userID}, ${client.socket.id}]`);
-        console.info("All connected clients :");
-        clients.forEach((client) => console.info(`\n\t[${client.userID} ,${client.socket.id}]`));
-        console.info("\n");
-    });
+    // The user is whoever the token says, so the socket is registered as soon as it connects: a client does not
+    // have to announce itself (and cannot choose its identity). The "init" event of older clients is accepted and ignored.
+    let client = {
+        socket : socket,
+        userID : socket.userID
+    };
+    clients.add(client);
+    console.info("Client connected : " + `[${client.userID}, ${client.socket.id}]`);
+    console.info(`Connected clients : ${clients.size}`);
+    socket.on("init", ()=>{});
 
     socket.on("disconnect", () => {
         console.info(`Client disconnected [id=${socket.id}]`);
@@ -779,7 +768,7 @@ server.on("connection", (socket) => {
             sender : Number(data["sender"]),
             receiver : Number(data["receiver"]),
             content : data["content"],
-            date : typeof data["date"] === "string" ? data["date"] : new Date()
+            date : new Date()  // server time, the `date` sent by the client is ignored
         };
         console.info(`client [${socket.id}] sends: [${data_raw}]`);
         clients.forEach((client) => {
