@@ -33,11 +33,17 @@ public class AuthRequest extends StringRequest {
     public void deliverError(VolleyError error) {
         if (error.networkResponse != null && error.networkResponse.statusCode == 401) {
             User user = User.peek();
-            // several requests can fail at once: only the first one closes the session
-            if (user != null && user.isLoggedin()) {
-                user.expireSession();
+            if (user != null) {
+                // several requests can fail at once: only the first one closes the session
+                if (user.isLoggedin()) {
+                    user.expireSession();
+                    return;  // the screens are being closed: their "connection error" message would only confuse
+                }
+                if (user.getToken() == null) {
+                    return;  // the session was already closed by an earlier failed request
+                }
             }
         }
-        super.deliverError(error);  // the screen's own listener still runs (it dismisses its progress dialog)
+        super.deliverError(error);  // anything else: the screen's own listener reports it and dismisses its progress dialog
     }
 }

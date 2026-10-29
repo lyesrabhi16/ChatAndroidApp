@@ -34,6 +34,7 @@ The app running on an Android emulator against the server from this repository.
 
 ```bash
 docker compose up --build        # MySQL 8 with the sample database + the server (ports 8001 and 8000)
+# set your own signing secret for the login tokens:  JWT_SECRET=$(openssl rand -hex 32) docker compose up --build
 npm install && npm run smoke     # 56 end-to-end checks against the running server
 ```
 
