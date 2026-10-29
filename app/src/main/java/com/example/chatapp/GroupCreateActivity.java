@@ -98,6 +98,9 @@ public class GroupCreateActivity extends AppCompatActivity {
                     list.add(item);
                 }
                 adapter.setList(list);
+                b.noFriends.setText(groupID != -1 && !exclude.isEmpty()
+                        ? "Everyone you know is already in this group. Add more friends from Search first."
+                        : "You have no friends to add yet. Find people in Search and add them as friends first.");
                 b.noFriends.setVisibility(list.isEmpty() ? View.VISIBLE : View.GONE);
             }
 

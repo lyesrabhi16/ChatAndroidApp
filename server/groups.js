@@ -72,7 +72,7 @@ module.exports = function groups({ app, dbc, requireAuth, emitToUsers, isOnline,
 
     app.post("/groups/add", requireAuth, mustBeIntegers("groupID", "userID"), async (req, res) => {
         try {
-            const g = await loadGroup(req, res, true);
+            const g = await loadGroup(req, res, false)   // any member can add a person; removing and renaming stay with admins;
             if (!g) return;
             const userID = Number(req.body.userID);
             if (g.members.length >= MAX_MEMBERS) { res.json({ error: `a group is limited to ${MAX_MEMBERS} members` }); return; }

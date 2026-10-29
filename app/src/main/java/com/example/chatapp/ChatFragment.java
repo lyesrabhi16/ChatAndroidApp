@@ -293,6 +293,12 @@ public class ChatFragment extends AppCompatActivity {
                 startActivity(account);
             }
         });
+        b.buttonAddMember.setVisibility(isGroup ? View.VISIBLE : View.GONE);
+        b.buttonAddMember.setOnClickListener(v -> {
+            Intent add = new Intent(this, GroupCreateActivity.class);
+            add.putExtra("groupID", groupID);
+            startActivity(add);
+        });
         b.buttonAttach.setOnClickListener(this::showAttachMenu);
         b.buttonSend.setOnClickListener(v -> {
             if (b.edittextMessage.getText().toString().trim().isEmpty()) onMicrophone();

@@ -320,11 +320,11 @@ function connect(token) {
     check("reading the group clears its unread count", (await post("/conversations", {}, tC)).conversations.find(c => c.kind === "group" && c.id === gid).unread === 0);
     check("you do not count your own messages as unread", (await post("/conversations", {}, tB)).conversations.find(c => c.kind === "group" && c.id === gid).unread === 1);
 
-    check("a plain member cannot add people", (await call("/groups/add", { groupID: gid, userID: dave.userID }, tB)).status === 403);
+    check("an outsider cannot add people", (await call("/groups/add", { groupID: gid, userID: dave.userID }, dave.token)).status === 403);
     check("a plain member cannot rename", (await call("/groups/rename", { groupID: gid, name: "mine now" }, tB)).status === 403);
     check("an admin renames the group", (await post("/groups/rename", { groupID: gid, name: "Summer trip" }, tA)).name === "Summer trip");
     const groupEventsD = events(sockD, "group updated");
-    check("an admin adds a member", (await post("/groups/add", { groupID: gid, userID: dave.userID }, tA)).added === dave.userID);
+    check("any member can add a person", (await post("/groups/add", { groupID: gid, userID: dave.userID }, tB)).added === dave.userID);
     check("adding twice is refused", (await post("/groups/add", { groupID: gid, userID: dave.userID }, tA)).error === "already a member");
     await sleep(300);
     check("the new member is told", groupEventsD.some(e => e.groupID === gid));

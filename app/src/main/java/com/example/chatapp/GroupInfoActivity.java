@@ -91,7 +91,8 @@ public class GroupInfoActivity extends AppCompatActivity {
                 b.groupTitle.setText(groupName);
                 Avatars.apply(b.groupAvatar, groupName);
                 b.groupSubtitle.setText(count + " members");
-                b.adminActions.setVisibility(admin ? View.VISIBLE : View.GONE);
+                // anyone in the group can add people; renaming is for admins
+        b.buttonRename.setVisibility(admin ? View.VISIBLE : View.GONE);
 
                 ArrayList<PersonItem> list = new ArrayList<>();
                 for (int i = 0; members != null && i < members.length(); i++) {

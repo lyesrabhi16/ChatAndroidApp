@@ -43,6 +43,21 @@
             app:layout_constraintStart_toEndOf="@id/button_back"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- groups only: add people to the group -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_add_member"
+            style="@style/Widget.Material3.Button.IconButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="4dp"
+            android:contentDescription="Add people to the group"
+            android:visibility="gone"
+            app:icon="@drawable/ic_group_add"
+            app:iconTint="?attr/colorOnSurface"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <LinearLayout
             android:id="@+id/header_info"
             android:layout_width="0dp"
@@ -51,7 +66,7 @@
             android:gravity="center_vertical"
             android:orientation="vertical"
             android:paddingHorizontal="12dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/button_add_member"
             app:layout_constraintStart_toEndOf="@id/chat_header_avatar"
             app:layout_constraintTop_toTopOf="parent">
 
