@@ -45,10 +45,11 @@ public class ChatItemAdapter extends RecyclerView.Adapter<ChatItemAdapter.ViewHo
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         switch (viewType){
+            // your own messages on the right, the other person's on the left
             case ChatItem.SENDER:
-                return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_item, parent, false));
-            case ChatItem.RECEIVER:
                 return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_item_right, parent, false));
+            case ChatItem.RECEIVER:
+                return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_item, parent, false));
         }
 
         return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_item, parent, false));
