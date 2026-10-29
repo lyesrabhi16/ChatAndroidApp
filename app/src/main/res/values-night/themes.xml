@@ -4,9 +4,9 @@
         <item name="colorOnPrimary">@color/indigo_950</item>
         <item name="colorPrimaryContainer">@color/indigo_800</item>
         <item name="colorOnPrimaryContainer">@color/indigo_100</item>
-        <item name="colorSecondary">@color/teal_300</item>
+        <item name="colorSecondary">@color/indigo_300</item>
         <item name="colorOnSecondary">@color/indigo_950</item>
-        <item name="colorSecondaryContainer">@color/teal_600</item>
+        <item name="colorSecondaryContainer">@color/indigo_800</item>
         <item name="colorOnSecondaryContainer">@color/white</item>
         <item name="android:colorBackground">@color/background_dark</item>
         <item name="colorSurface">@color/surface_dark</item>
