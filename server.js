@@ -26,8 +26,10 @@ dbc.query("SELECT 1", err => {
         }
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// /upload receives a raw file body, so the JSON and form parsers must leave it alone
+const jsonBody = express.json(), formBody = express.urlencoded({ extended: false });
+app.use((req, res, next) => req.path === "/upload" ? next() : jsonBody(req, res, next));
+app.use((req, res, next) => req.path === "/upload" ? next() : formBody(req, res, next));
 
 // ---- authentication -------------------------------------------------------------------------------------------
 // /signup and /signin return a signed token (JWT). Every other route and every Socket.IO connection must present it,
@@ -256,6 +258,7 @@ app.post("/signin", (req, res) => {
                         userID    : result0.userID,
                         userEmail : result0.userEmail,
                         userName : result0.userName,
+                        avatar : result0.avatar,
                         token : issueToken(result0.userID)
                     };
                     res.json(response);
@@ -309,6 +312,9 @@ app.post("/user", requireAuth, (req, res) =>{
                     userID : result0.userID,
                     userName : result0.userName,
                     userEmail : result0.userEmail,
+                    avatar : result0.avatar,
+                    online : isOnline(result0.userID),
+                    lastSeen : result0.lastSeen ? new Date(result0.lastSeen).toISOString() : null,
                 };
                 console.error("user : " ,response);
                 res.json(response);
@@ -379,14 +385,14 @@ app.post("/search", requireAuth, (req, res) => {
             termWords.map(w => w + "*").join(" "),              // word prefixes
             ...termWords.flatMap(w => colList.map(() => likePattern(w)))
         ],
-        sql = `SELECT t.userID, t.userName, t.userEmail FROM
+        sql = `SELECT t.userID, t.userName, t.userEmail, t.avatar FROM
             (SELECT *,
              MATCH(${cols}) AGAINST(? IN BOOLEAN MODE) score_exact,
              MATCH(${cols}) AGAINST(? IN BOOLEAN MODE) score_all,
              MATCH(${cols}) AGAINST(? IN BOOLEAN MODE) score_some,
              MATCH(${cols}) AGAINST(? IN BOOLEAN MODE) score_pre
              FROM (
-                SELECT userID, userName, userEmail FROM users WHERE (${conditions})
+                SELECT userID, userName, userEmail, avatar FROM users WHERE (${conditions})
              ) as f
             ) as t
             ORDER BY t.score_exact DESC, t.score_all DESC, t.score_some DESC, t.score_pre DESC
@@ -454,107 +460,6 @@ app.post("/chats", requireAuth, asSelf("userID"), (req, res)=>{
 
 });
 
-app.post("/messages", requireAuth, participant("userID1", "userID2"), (req, res)=>{
-    if(req.body["userID1"] === undefined){
-        let message = "missing parameter : userID1"
-        console.error(message);
-        res.json(
-            {error : message}
-        );
-        return;
-    }
-    if(req.body["userID2"] === undefined){
-        let message = "missing parameter : userID2"
-        console.error(message);
-        res.json(
-            {error : message}
-        );
-        return;
-    }
-
-    let 
-        response = undefined,
-        userID1 = req.body["userID1"],
-        userID2 = req.body["userID2"],
-        sql = "SELECT * FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER By date ASC";
-    
-    dbc.query(
-        sql,
-        [userID1,userID2,userID2,userID1],
-        (err, results)=>{
-        if (err){
-            response = {error : ""+ err.code};
-            res.json(response);
-        }
-        else {               
-            response = {
-                messages : results 
-            };
-            res.json(response);
-        
-        }
-    })
-
-});
-
-app.post("/messages/send", requireAuth, asSelf("sender"), mustBeIntegers("receiver"), mustBeStrings("content"), (req, res)=>{
-    if(req.body["sender"] === undefined){
-        let message = "missing parameter : sender"
-        console.error(message);
-        res.json(
-            {error : message}
-        );
-        return;
-    }
-    if(req.body["receiver"] === undefined){
-        let message = "missing parameter : receiver"
-        console.error(message);
-        res.json(
-            {error : message}
-        );
-        return;
-    }
-    if(req.body["content"] === undefined){
-        let message = "missing parameter : content"
-        console.error(message);
-        res.json(
-            {error : message}
-        );
-        return;
-    }
-    let
-        response = undefined,
-        message = {
-            sender : req.body["sender"],
-            receiver : req.body["receiver"],
-            content : req.body["content"],
-            // the server stamps the time: a client's clock (or time zone) must not decide the order of a conversation
-            date : new Date()
-        },
-        sql = "INSERT INTO messages SET ?";
-    
-    dbc.query(
-        sql,
-        message,
-        (err, result) => {
-            if (err){
-                response = {error : ""+ err.code};
-                res.json(response);
-            }
-            else {               
-                response = {
-                    messageID : result.insertId
-                };
-                res.json(response);
-            
-            }
-        }
-        
-        )
-
-    
-});
-
 app.post("/friends", requireAuth, asSelf("userID"), (req, res)=>{
     if(req.body["userID"] === undefined){
         let message = "missing parameter : userID"
@@ -568,7 +473,7 @@ app.post("/friends", requireAuth, asSelf("userID"), (req, res)=>{
     let 
         response = undefined,
         userID = req.body["userID"],
-        sql = `SELECT users.userID, users.userName, users.userEmail 
+        sql = `SELECT users.userID, users.userName, users.userEmail, users.avatar
                 FROM users,
                     (
                         select * from friends WHERE user1 = ? OR user2 = ?
@@ -686,136 +591,143 @@ app.post("/friends/remove", requireAuth, asSelf("userID1"), (req, res)=>{
 
 });
 
-app.listen(port, ()=> console.info("express server listening on port "+port));
+// ---- real time (Socket.IO) --------------------------------------------------------------------------------------
+const {Server} = require("socket.io");
 
+// One entry per open connection: a user can be connected from several devices.
+const clients = new Set();
+const isOnline = userID => [...clients].some(c => c.userID === userID);
+function emitToUsers(userIDs, event, payload) {
+    const wanted = new Set(userIDs);
+    clients.forEach(client => { if (wanted.has(client.userID)) client.socket.emit(event, payload); });
+}
+const mustBeIntegersMw = mustBeIntegers;
+const shared = { app, dbc, requireAuth, emitToUsers, isOnline, mustBeIntegers: mustBeIntegersMw };
 
+require("./server/uploads")(shared);
+const messaging = require("./server/messaging")(shared);
+require("./server/groups")(shared);
 
-
-//server
-const {Server} = require("socket.io"),
-    server = new Server(socketPort);
+// The people who care that a user is online: friends, people they talk to and members of their groups.
+async function contactsOf(userID) {
+    const [rows] = await dbc.promise().query(`
+        SELECT DISTINCT x AS id FROM (
+            SELECT IF(user1 = ?, user2, user1) AS x FROM friends WHERE user1 = ? OR user2 = ?
+            UNION SELECT IF(sender = ?, receiver, sender) FROM messages WHERE groupID IS NULL AND (sender = ? OR receiver = ?)
+            UNION SELECT other.userID FROM group_members mine JOIN group_members other ON other.groupID = mine.groupID
+                  WHERE mine.userID = ? AND other.userID <> ?
+        ) t WHERE x IS NOT NULL`, Array(8).fill(userID));
+    return rows.map(r => r.id);
+}
 
 // A connection must present a valid token, either as `auth: {token}` (Socket.IO 3+ clients) or `?token=...`.
-server.use((socket, next) => {
-    const token = (socket.handshake.auth && socket.handshake.auth.token) || socket.handshake.query.token;
-    const id = typeof token === "string" ? userIDFromToken(token) : null;
-    if (id === null) {
-        next(new Error("authentication required"));
-        return;
-    }
-    socket.userID = id;
-    next();
-});
-
-// clients is an array of client objects
-// client = { 
-//      socket : ?,
-//      userID : ?
-// }
-let clients = new Set();
-
-server.on("connection", (socket) => {
-
-    console.info(`Connection detected : [${socket.id}]`)
-    
-    socket.emit("message","hello from server");
-    socket.emit("init request");
-
-    // The user is whoever the token says, so the socket is registered as soon as it connects: a client does not
-    // have to announce itself (and cannot choose its identity). The "init" event of older clients is accepted and ignored.
-    let client = {
-        socket : socket,
-        userID : socket.userID
-    };
-    clients.add(client);
-    console.info("Client connected : " + `[${client.userID}, ${client.socket.id}]`);
-    console.info(`Connected clients : ${clients.size}`);
-    socket.on("init", ()=>{});
-
-    socket.on("disconnect", () => {
-        console.info(`Client disconnected [id=${socket.id}]`);
-        clients.forEach((client) => {
-            if (client.socket.id === socket.id) clients.delete(client);
-        })
+function startSocketServer() {
+    const server = new Server(socketPort);
+    server.use((socket, next) => {
+        const token = (socket.handshake.auth && socket.handshake.auth.token) || socket.handshake.query.token;
+        const id = typeof token === "string" ? userIDFromToken(token) : null;
+        if (id === null) {
+            next(new Error("authentication required"));
+            return;
+        }
+        socket.userID = id;
+        next();
     });
-    
-    socket.on("message", (msg) => {
-        console.info("Client ["+ socket.id +"] sends : ["+ msg +"]");
-    })
 
-    socket.on("chat message", (data_raw)=>{
+    server.on("connection", (socket) => {
+        console.info(`Connection detected : [${socket.id}]`)
+        socket.emit("message","hello from server");
+        socket.emit("init request");
 
-        // Anything a client sends is untrusted: a malformed payload must not crash the whole server.
-        let data;
-        try {
-            data = JSON.parse(data_raw);
-        } catch (e) {
-            console.info(`client [${socket.id}] sent an invalid message, ignored`);
-            return;
-        }
-        if (data === null || typeof data !== "object"
-            || !Number.isInteger(Number(data["sender"])) || !Number.isInteger(Number(data["receiver"]))
-            || typeof data["content"] !== "string" || data["content"].length === 0) {
-            console.info(`client [${socket.id}] sent an incomplete message, ignored`);
-            return;
-        }
-        if (Number(data["sender"]) !== socket.userID) {
-            console.info(`client [${socket.id}] (user ${socket.userID}) tried to send as user ${data["sender"]}, ignored`);
-            return;
-        }
-        // only the known columns are written, whatever else the client included
-        data = {
-            sender : Number(data["sender"]),
-            receiver : Number(data["receiver"]),
-            content : data["content"],
-            date : new Date()  // server time, the `date` sent by the client is ignored
-        };
-        console.info(`client [${socket.id}] sends: [${data_raw}]`);
-        clients.forEach((client) => {
+        // The user is whoever the token says, so the socket is registered as soon as it connects: a client does not
+        // have to announce itself (and cannot choose its identity). The "init" event of older clients is accepted and ignored.
+        const wasOnline = isOnline(socket.userID);
+        const client = { socket : socket, userID : socket.userID };
+        clients.add(client);
+        console.info("Client connected : " + `[${client.userID}, ${client.socket.id}]`);
+        console.info(`Connected clients : ${clients.size}`);
+        socket.on("init", ()=>{});
 
-            if(client.userID == data["receiver"] || client.userID == data["sender"])
-            {
-                console.info(`\t[${data["content"]}] sent to : client [${client.socket.id}]`);    
-                client.socket.emit("chat message", data_raw);
+        if (!wasOnline) {
+            contactsOf(socket.userID).then(ids => emitToUsers(ids, "presence", JSON.stringify({ userID: socket.userID, online: true })))
+                .catch(e => console.error(e));
+        }
+
+        socket.on("disconnect", () => {
+            console.info(`Client disconnected [id=${socket.id}]`);
+            clients.delete(client);
+            if (!isOnline(socket.userID)) {
+                const lastSeen = new Date();
+                dbc.query("UPDATE users SET lastSeen = ? WHERE userID = ?", [lastSeen, socket.userID], err => { if (err) console.error(err.code); });
+                contactsOf(socket.userID)
+                    .then(ids => emitToUsers(ids, "presence", JSON.stringify({ userID: socket.userID, online: false, lastSeen: lastSeen.toISOString() })))
+                    .catch(e => console.error(e));
             }
         });
-        let sql = "INSERT INTO messages SET ?";
-        dbc.query(
-            sql,
-            data,
-            (err, result) => {
-                if (err){
-                    console.info(`failed to add message to DB.\nerror: `+err.code);
+
+        socket.on("message", (msg) => {
+            console.info("Client ["+ socket.id +"] sends : ["+ msg +"]");
+        })
+
+        // { to: <userID> } or { groupID }, typing: true | false. Relayed to the other side, never stored.
+        socket.on("typing", async (raw) => {
+            try {
+                const data = typeof raw === "string" ? JSON.parse(raw) : raw;
+                if (data === null || typeof data !== "object") return;
+                const event = JSON.stringify({ from: socket.userID, groupID: data.groupID == null ? null : Number(data.groupID), typing: data.typing === true });
+                if (data.groupID != null) {
+                    if (!(await messaging.isMember(Number(data.groupID), socket.userID))) return;
+                    const ids = await messaging.audience({ groupID: Number(data.groupID) });
+                    emitToUsers(ids.filter(id => id !== socket.userID), "typing", event);
+                } else if (Number.isInteger(Number(data.to)) && Number(data.to) !== socket.userID) {
+                    emitToUsers([Number(data.to)], "typing", event);
                 }
-                else {               
-                    console.info(`message added. [messageID = ${result.insertId}]`);
-                }
+            } catch (e) { /* a malformed typing event is ignored */ }
+        });
+
+        socket.on("chat message", async (data_raw)=>{
+            // Anything a client sends is untrusted: a malformed payload must not crash the whole server.
+            let data;
+            try {
+                data = JSON.parse(data_raw);
+            } catch (e) {
+                console.info(`client [${socket.id}] sent an invalid message, ignored`);
+                return;
             }
-        )
-    })
-
-});
-
-
-
-
-///client
-/* const express = require("express");
-
-const app = express();
-const port = 3000;
-
-app.get("/", (req, res) => {
-    const
-        io = require("socket.io-client"),
-        ioClient = io.connect("http://localhost:8000");
-
-    ioClient.on("message", (msg) => {
-        console.info(msg)
-        ioClient.emit("message", "hello from client");
+            if (data === null || typeof data !== "object") {
+                console.info(`client [${socket.id}] sent an incomplete message, ignored`);
+                return;
+            }
+            if (data["sender"] !== undefined && Number(data["sender"]) !== socket.userID) {
+                console.info(`client [${socket.id}] (user ${socket.userID}) tried to send as user ${data["sender"]}, ignored`);
+                return;
+            }
+            console.info(`client [${socket.id}] sends: [${data_raw}]`);
+            try {
+                const result = await messaging.createMessage(socket.userID, data);   // validates, stores, then delivers
+                if (result.error) console.info(`message from [${socket.id}] refused: ${result.error}`);
+            } catch (e) {
+                console.error(e);
+            }
+        })
     });
+    return server;
+}
 
-})
-app.listen(port, ()=>{
-    console.info("express server listening on port " + port);
-}); */
+// The schema is brought up to date before anything is served.
+const migrate = require("./server/migrate");
+(async () => {
+    for (let attempt = 1; ; attempt++) {
+        try {
+            await migrate(dbc);
+            break;
+        } catch (e) {
+            if (attempt >= 10) { console.error("database migration failed:", e); process.exit(1); }
+            console.info(`database not ready (${e.code || e.message}), retrying...`);
+            await new Promise(r => setTimeout(r, 2000));
+        }
+    }
+    console.info("database schema is up to date.");
+    app.listen(port, ()=> console.info("express server listening on port "+port));
+    startSocketServer();
+})();

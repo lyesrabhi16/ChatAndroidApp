@@ -23,6 +23,8 @@ services:
       DB_PASSWORD: chat-demo-root
       DB_NAME: ChatDB
       JWT_SECRET: ${JWT_SECRET:-demo-only-change-me-demo-only-change-me}   # signs the login tokens: set your own long random value (JWT_SECRET=... docker compose up)
+    volumes:
+      - uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -31,3 +33,4 @@ services:
       - "8000:8000"   # Socket.IO
 volumes:
   db-data:
+  uploads:
