@@ -45,6 +45,18 @@ public class GroupCreateActivity extends AppCompatActivity {
         adapter = new PersonItemAdapter(new ArrayList<>(), position -> {});
         adapter.setSelectable(true);
         b.recyclerFriends.setAdapter(adapter);
+        b.groupName.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                b.groupNameLayout.setError(null);   // the complaint no longer applies once the user types
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
         b.buttonBack.setOnClickListener(v -> finish());
         b.buttonCreateGroup.setOnClickListener(v -> submit());
 
