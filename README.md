@@ -18,6 +18,18 @@ Node.js server (Express, Socket.IO, Argon2) ──► MySQL 8 (users, friends, m
 - **People** tab: add and remove friends.
 - Account screen with your profile and log out.
 
+## Screenshots
+
+The app running on an Android emulator against the server from this repository.
+
+| Sign in | Sign up | Chats |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/sign-in.png" width="240"> | <img src="docs/screenshots/sign-up.png" width="240"> | <img src="docs/screenshots/chats.png" width="240"> |
+
+| Search | Profile | Conversation |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/search.png" width="240"> | <img src="docs/screenshots/profile.png" width="240"> | <img src="docs/screenshots/conversation.png" width="240"> |
+
 ## Quick start (server and database)
 
 ```bash
