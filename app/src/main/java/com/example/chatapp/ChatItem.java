@@ -1,59 +1,93 @@
 package com.example.chatapp;
 
+import androidx.annotation.Nullable;
+
+import org.json.JSONObject;
+
+/** One message of a conversation, as the server describes it, ready to be shown. */
 public class ChatItem {
-    public static final int  SENDER = 0;
-    public static final int  RECEIVER = 1;
-    private int messageID, type;
-    private String  header, message, footer, avatarText;
+    /** Whose message it is: yours (right) or the other person's (left). */
+    public static final int SENDER = 0;
+    public static final int RECEIVER = 1;
 
+    public static final String TEXT = "text", IMAGE = "image", AUDIO = "audio", FILE = "file";
 
-    public String getHeader() {
-        return header;
+    /** What a reply quotes. */
+    public static class Reply {
+        public int messageID, sender;
+        public String senderName, type, content;
+        public boolean deleted;
     }
 
-    public void setHeader(String header) {
-        this.header = header;
+    private int messageID, type, sender, groupID = -1, replyTo = -1, fileSize, duration;
+    private String senderName, msgType = TEXT, message = "", attachment, fileName, date;
+    private boolean edited, deleted, read;
+    private Reply reply;
+
+    /** `myID` decides the side of the bubble. */
+    public static ChatItem fromJson(JSONObject m, int myID) {
+        ChatItem item = new ChatItem();
+        item.messageID = m.optInt("messageID");
+        item.sender = m.optInt("sender");
+        item.type = item.sender == myID ? SENDER : RECEIVER;
+        item.groupID = m.isNull("groupID") ? -1 : m.optInt("groupID", -1);
+        item.senderName = Api.str(m, "senderName");
+        item.msgType = m.optString("type", TEXT);
+        item.message = m.optString("content", "");
+        item.attachment = Api.str(m, "attachment");
+        item.fileName = Api.str(m, "fileName");
+        item.fileSize = m.optInt("fileSize");
+        item.duration = m.optInt("duration");
+        item.replyTo = m.isNull("replyTo") ? -1 : m.optInt("replyTo", -1);
+        item.edited = m.optBoolean("edited");
+        item.deleted = m.optBoolean("deleted");
+        item.read = !m.isNull("readAt");
+        item.date = Api.str(m, "date");
+        JSONObject r = m.optJSONObject("reply");
+        if (r != null) {
+            item.reply = new Reply();
+            item.reply.messageID = r.optInt("messageID");
+            item.reply.sender = r.optInt("sender");
+            item.reply.senderName = Api.str(r, "senderName");
+            item.reply.type = r.optString("type", TEXT);
+            item.reply.content = r.optString("content", "");
+            item.reply.deleted = r.optBoolean("deleted");
+        }
+        return item;
     }
 
-    public String getMessage() {
-        return message;
+    /** The one-line description of a message in the conversation list and in the reply quote. */
+    public static String summary(String msgType, String content, @Nullable String fileName, boolean deleted) {
+        if (deleted) return "This message was deleted";
+        switch (msgType == null ? TEXT : msgType) {
+            case IMAGE: return content == null || content.isEmpty() ? "Photo" : "Photo: " + content;
+            case AUDIO: return "Voice message";
+            case FILE: return fileName == null || fileName.isEmpty() ? "File" : fileName;
+            default: return content == null ? "" : content.replace('\n', ' ');
+        }
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public String summary() {
+        return summary(msgType, message, fileName, deleted);
     }
 
-    public String getFooter() {
-        return footer;
-    }
+    public int getMessageID() { return messageID; }
+    public int getType() { return type; }
+    public int getSender() { return sender; }
+    public int getGroupID() { return groupID; }
+    public int getReplyTo() { return replyTo; }
+    public int getFileSize() { return fileSize; }
+    public int getDuration() { return duration; }
+    public String getSenderName() { return senderName; }
+    public String getMsgType() { return msgType; }
+    public String getMessage() { return message; }
+    public String getAttachment() { return attachment; }
+    public String getFileName() { return fileName; }
+    public String getDate() { return date; }
+    public boolean isEdited() { return edited; }
+    public boolean isDeleted() { return deleted; }
+    public boolean isRead() { return read; }
+    public Reply getReply() { return reply; }
 
-    public void setFooter(String footer) {
-        this.footer = footer;
-    }
-
-    public String getAvatarText() {
-        return avatarText;
-    }
-
-    public void setAvatarText(String avatarText) {
-        this.avatarText = avatarText;
-    }
-
-    public int getMessageID() {
-        return messageID;
-    }
-
-    public void setMessageID(int messageID) {
-        this.messageID = messageID;
-    }
-
-
-
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
-    }
+    public void setRead(boolean read) { this.read = read; }
 }

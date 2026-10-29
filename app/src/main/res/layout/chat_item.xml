@@ -5,6 +5,7 @@
     android:layout_height="wrap_content"
     android:paddingVertical="3dp">
 
+    <!-- One bubble for every kind of message; the adapter shows the parts that apply (ChatItemAdapter) -->
     <LinearLayout
         android:id="@+id/bubble"
         android:layout_width="0dp"
@@ -14,28 +15,166 @@
         android:paddingHorizontal="14dp"
         android:paddingTop="9dp"
         android:paddingBottom="6dp"
+        android:layout_marginEnd="56dp"
         app:layout_constrainedWidth="true"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_default="wrap"
-        app:layout_constraintHorizontal_bias="0.0"
-        android:layout_marginEnd="56dp">
+        app:layout_constraintWidth_default="wrap">
 
-        <!-- sender name: only useful in group chats, hidden in a one-to-one conversation -->
+        <!-- sender name: only shown in group chats -->
         <TextView
             android:id="@+id/header"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="2dp"
             android:textAppearance="?attr/textAppearanceLabelMedium"
-            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textStyle="bold"
             android:visibility="gone" />
+
+        <!-- the message this one replies to -->
+        <LinearLayout
+            android:id="@+id/reply_block"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/reply_block"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:background="?attr/colorOnSurface" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:padding="6dp">
+
+                <TextView
+                    android:id="@+id/reply_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/reply_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/image"
+            android:layout_width="220dp"
+            android:layout_height="180dp"
+            android:layout_marginBottom="4dp"
+            android:background="#22808080"
+            android:contentDescription="Photo"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            app:shapeAppearanceOverlay="@style/ChatApp.RoundedImage" />
+
+        <LinearLayout
+            android:id="@+id/audio_row"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <ImageButton
+                android:id="@+id/audio_play"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/audio_button"
+                android:contentDescription="Play"
+                android:src="@drawable/ic_play"
+                app:tint="?attr/colorOnSurface" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <ProgressBar
+                    android:id="@+id/audio_progress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="4dp"
+                    android:max="1000"
+                    android:progressBackgroundTint="#44808080"
+                    android:progressTint="?attr/colorOnSurface" />
+
+                <TextView
+                    android:id="@+id/audio_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/file_row"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_file"
+                app:tint="?attr/colorOnSurface" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/file_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="middle"
+                    android:maxWidth="190dp"
+                    android:maxLines="1"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/file_size"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Message"
             android:textColor="?attr/colorOnSurface"
             android:textSize="16sp" />
 
@@ -45,8 +184,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:layout_marginTop="2dp"
-            android:alpha="0.75"
-            android:textColor="?attr/colorOnSurfaceVariant"
+            android:alpha="0.8"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="11sp" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -5,13 +5,14 @@ import android.content.res.ColorStateList;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.RoundedBitmapDrawable;
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.core.view.ViewCompat;
 
-import com.google.android.material.button.MaterialButton;
-
 /**
- * Avatars without pictures: the first letter of the name on a colour that is always the same for the same name,
- * so a person is recognisable at a glance in the lists, the conversation header and the profile.
+ * Avatars: a profile picture when the person has one, otherwise the first letter of the name on a colour that is
+ * always the same for the same name, so a person is recognisable at a glance in the lists, the conversation header
+ * and the profile.
  */
 public final class Avatars {
     private static final int[] PALETTE = {
@@ -33,15 +34,26 @@ public final class Avatars {
         return ContextCompat.getColor(context, PALETTE[(hash & 0x7fffffff) % PALETTE.length]);
     }
 
-    /** Fills a circular TextView (style ChatApp.Avatar). */
+    /** Fills a circular TextView (style ChatApp.Avatar) with the initial of `name`. */
     public static void apply(TextView view, String name) {
-        view.setText(initial(name));
-        ViewCompat.setBackgroundTintList(view, ColorStateList.valueOf(color(view.getContext(), name)));
+        apply(view, name, null);
     }
 
-    /** Same, for a MaterialButton used as an avatar. */
-    public static void apply(MaterialButton button, String name) {
-        button.setText(initial(name));
-        button.setBackgroundTintList(ColorStateList.valueOf(color(button.getContext(), name)));
+    /** Same, with the profile picture `attachment` (a name on the server) once it has loaded. */
+    public static void apply(TextView view, String name, String attachment) {
+        view.setTag(R.id.avatar_request, attachment);
+        view.setBackgroundResource(R.drawable.avatar_circle);   // views are recycled: undo a picture set earlier
+        view.setText(initial(name));
+        ViewCompat.setBackgroundTintList(view, ColorStateList.valueOf(color(view.getContext(), name)));
+        if (attachment == null || attachment.isEmpty()) return;
+        Media.image(view.getContext(), attachment, 256, bitmap -> {
+            // the view may have been reused for someone else while the picture was loading
+            if (bitmap == null || !attachment.equals(view.getTag(R.id.avatar_request))) return;
+            RoundedBitmapDrawable drawable = RoundedBitmapDrawableFactory.create(view.getResources(), bitmap);
+            drawable.setCircular(true);
+            ViewCompat.setBackgroundTintList(view, null);
+            view.setBackground(drawable);
+            view.setText("");
+        });
     }
 }

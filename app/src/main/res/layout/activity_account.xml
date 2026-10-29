@@ -114,6 +114,16 @@
                 app:strokeColor="?attr/colorError" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_change_photo"
+                style="@style/Widget.ChatApp.Button.Tonal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:text="Change photo"
+                android:visibility="gone"
+                app:icon="@drawable/ic_image" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_changePassword"
                 style="@style/Widget.ChatApp.Button.Tonal"
                 android:layout_width="match_parent"

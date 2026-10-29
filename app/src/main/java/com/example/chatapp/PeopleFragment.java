@@ -53,6 +53,7 @@ public class PeopleFragment extends Fragment {
                 Intent chat = new Intent(getContext(), ChatFragment.class);
                 chat.putExtra("userID", adapter.getList().get(position).getUserID());
                 chat.putExtra("userName", adapter.getList().get(position).getTitle());
+                chat.putExtra("avatar", adapter.getList().get(position).getAvatar());
                 startActivity(chat);
             }
         });
@@ -100,6 +101,7 @@ public class PeopleFragment extends Fragment {
                             item.setUserID(r.getInt("userID"));
                             item.setTitle(r.getString("userName"));
                             item.setSubTitle(r.getString("userEmail"));
+                            item.setAvatar(Api.str(r, "avatar"));
                             personItemArrayList.add(item);
 
                             if(!Friends.getFriends().contains(item.getUserID())){

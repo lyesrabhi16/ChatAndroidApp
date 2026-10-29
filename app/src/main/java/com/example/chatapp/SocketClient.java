@@ -42,6 +42,7 @@ public class SocketClient {
                 options.auth = Collections.singletonMap("token", user.getToken());
             }
             socket = IO.socket(Configs.getSocketURL(), options);
+            ChatEvents.attach(socket);
             socket.connect();
             closed = false;
 

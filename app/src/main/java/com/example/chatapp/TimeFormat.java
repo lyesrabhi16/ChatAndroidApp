@@ -51,6 +51,17 @@ public final class TimeFormat {
         return new SimpleDateFormat("d MMM", Locale.getDefault()).format(d);
     }
 
+    /** Under a name in the conversation header: "last seen today at 22:10", "last seen yesterday at 09:30", "last seen 3 Oct". */
+    public static String lastSeen(String iso) {
+        Date d = parse(iso);
+        if (d == null) return "";
+        if (sameDay(d, new Date())) return "last seen today at " + clock(d);
+        Calendar yesterday = Calendar.getInstance();
+        yesterday.add(Calendar.DAY_OF_YEAR, -1);
+        if (sameDay(d, yesterday.getTime())) return "last seen yesterday at " + clock(d);
+        return "last seen " + new SimpleDateFormat("d MMM", Locale.getDefault()).format(d);
+    }
+
     /** A message that has just been sent or received. */
     public static String now() {
         return clock(new Date());

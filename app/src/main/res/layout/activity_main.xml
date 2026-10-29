@@ -37,23 +37,17 @@
             app:searchIcon="@drawable/ic_search_pill"
             app:submitBackground="@null" />
 
-        <!-- Shows the initial of your name on a colour that is yours (set in MainActivity) -->
-        <com.google.android.material.button.MaterialButton
+        <!-- Your picture, or the initial of your name on a colour that is yours (set in MainActivity) -->
+        <TextView
             android:id="@+id/button_account"
+            style="@style/ChatApp.Avatar"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:insetLeft="0dp"
-            android:insetTop="0dp"
-            android:insetRight="0dp"
-            android:insetBottom="0dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:padding="0dp"
+            android:clickable="true"
+            android:contentDescription="Your profile"
+            android:focusable="true"
             android:text="?"
-            android:textColor="@color/white"
             android:textSize="18sp"
-            android:textStyle="bold"
-            app:cornerRadius="24dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the quote of a reply inside a bubble: a faint grey card that works on both bubble colours -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#26808080" />
+    <corners android:radius="8dp" />
+</shape>

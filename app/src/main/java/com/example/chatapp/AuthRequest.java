@@ -21,7 +21,17 @@ public class AuthRequest extends StringRequest {
 
     @Override
     public Map<String, String> getHeaders() throws AuthFailureError {
-        Map<String, String> headers = new HashMap<>(super.getHeaders());
+        return withAuth(super.getHeaders());
+    }
+
+    @Override
+    public void deliverError(VolleyError error) {
+        if (!sessionEnded(error)) super.deliverError(error);  // anything else: the screen's own listener reports it
+    }
+
+    /** The headers plus the signed-in user's token (shared with the upload and download requests). */
+    static Map<String, String> withAuth(Map<String, String> base) {
+        Map<String, String> headers = new HashMap<>(base);
         User user = User.peek();
         if (user != null && user.getToken() != null) {
             headers.put("Authorization", "Bearer " + user.getToken());
@@ -29,21 +39,19 @@ public class AuthRequest extends StringRequest {
         return headers;
     }
 
-    @Override
-    public void deliverError(VolleyError error) {
-        if (error.networkResponse != null && error.networkResponse.statusCode == 401) {
-            User user = User.peek();
-            if (user != null) {
-                // several requests can fail at once: only the first one closes the session
-                if (user.isLoggedin()) {
-                    user.expireSession();
-                    return;  // the screens are being closed: their "connection error" message would only confuse
-                }
-                if (user.getToken() == null) {
-                    return;  // the session was already closed by an earlier failed request
-                }
-            }
+    /**
+     * True when the error is a 401 that is handled here (the session is closed, the sign-in screen opens) and the
+     * screen's own error message would only confuse.
+     */
+    static boolean sessionEnded(VolleyError error) {
+        if (error.networkResponse == null || error.networkResponse.statusCode != 401) return false;
+        User user = User.peek();
+        if (user == null) return false;
+        // several requests can fail at once: only the first one closes the session
+        if (user.isLoggedin()) {
+            user.expireSession();
+            return true;
         }
-        super.deliverError(error);  // anything else: the screen's own listener reports it and dismisses its progress dialog
+        return user.getToken() == null;  // already closed by an earlier failed request
     }
 }

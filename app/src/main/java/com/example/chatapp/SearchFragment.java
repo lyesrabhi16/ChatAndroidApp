@@ -112,6 +112,7 @@ public class SearchFragment extends Fragment {
                                     item.setUserID(r.getInt("userID"));
                                     item.setSubTitle(r.getString("userEmail"));
                                     item.setTitle(r.getString("userName"));
+                                    item.setAvatar(Api.str(r, "avatar"));
 
                                     l.add(item);
                                 }

@@ -17,6 +17,7 @@ public final class User {
     private static final String KEY_EMAIL = "userEmail";
     private static final String KEY_USERNAME = "userName";
     private static final String KEY_TOKEN = "token";
+    private static final String KEY_AVATAR = "avatar";
 
 
     private User(Context context){
@@ -78,6 +79,13 @@ public final class User {
         Intent signin = new Intent(Ctx, SignInActivity.class);
         signin.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         Ctx.startActivity(signin);
+    }
+
+    public String getAvatar(){
+        return prefs().getString(KEY_AVATAR, null);
+    }
+    public void setAvatar(String avatar){
+        prefs().edit().putString(KEY_AVATAR, avatar).apply();
     }
 
     public String getToken(){

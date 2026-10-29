@@ -44,4 +44,9 @@
         <item name="android:textStyle">bold</item>
         <item name="android:includeFontPadding">false</item>
     </style>
+
+    <!-- rounded corners of a photo inside a bubble -->
+    <style name="ChatApp.RoundedImage" parent="">
+        <item name="cornerSize">12dp</item>
+    </style>
 </resources>

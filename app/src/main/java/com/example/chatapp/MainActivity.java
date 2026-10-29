@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
 
         User user = User.getInstance(getApplicationContext());
         if(user.isLoggedin()){
-            Avatars.apply(MainBinding.buttonAccount, user.getUserName());
+            Avatars.apply(MainBinding.buttonAccount, user.getUserName(), user.getAvatar());
             Friends.loadFriends(getApplicationContext());
         }
         else{
@@ -97,8 +97,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        socketListenersOff();
-        socketListenersOn();
 
 
 
@@ -154,13 +152,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        socketListenersOn();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        socketListenersOff();
+        User user = User.getInstance(getApplicationContext());
+        if (user.isLoggedin()) Avatars.apply(MainBinding.buttonAccount, user.getUserName(), user.getAvatar());  // the picture may have changed in the profile
     }
 
     @Override
@@ -170,29 +163,6 @@ public class MainActivity extends AppCompatActivity {
         if (isFinishing()) SocketClient.closeSocket();
     }
 
-    public void socketListenersOn(){
-        if(socket.hasListeners("chat message")) return;
-        socket.on("chat message", new Emitter.Listener() {
-            @Override
-            public void call(Object... args) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        /*String msg = (String) args[0];
-                        ChatItem item = new ChatItem();
-                        item.setMessage(msg);
-                        list.add(item);
-                        adapter.notifyItemInserted(list.size()-1);
-                        MainBinding.list.smoothScrollToPosition(list.size()-1);*/
-                        Toast.makeText(getApplicationContext(), "message received in main: \n"+(String) args[0], Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-        });
-    }
-    public void socketListenersOff(){
-        socket.off("chat message");
-    }
 
 
 
