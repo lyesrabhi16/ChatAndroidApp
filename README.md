@@ -166,9 +166,3 @@ flake.nix               Nix dev shells (server, Android SDK)
 ## Tech stack
 
 Android (Java, Volley, Material 3, Navigation, Room, `socket.io-client`) · Node.js 22 · Express 4 · Socket.IO 4 · MySQL 8 (`mysql2`, full-text search) · Argon2 · Docker Compose · GitHub Actions · Gradle 7.5 / Android Gradle Plugin 7.4.
-
-## Not done (yet)
-
-- Push notifications (needs a Firebase project): you only see new messages while the app is open.
-- End-to-end encryption and HTTPS: messages and files are stored in clear on the server.
-- Unsent messages are not queued while offline (reading offline works, sending does not).
