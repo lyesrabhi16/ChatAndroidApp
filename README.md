@@ -21,7 +21,7 @@ Node.js server (Express, Socket.IO, Argon2) ──► MySQL 8 (users, friends, m
   - **replies** (the quoted message is shown in the bubble), **edit** and **delete** (your own messages, for everyone);
   - **read receipts** (✓ sent, ✓✓ read), **"typing…"**, **online / last seen**;
   - history loads in pages of 30 as you scroll up.
-- **Groups**: create from your friends; any member can add people later (from the header button or the group info), admins can remove members and rename the group, anyone can leave; the sender's name is shown on each message. When the last admin leaves, another member becomes admin.
+- **Groups**: create from your friends; admins add and remove members and rename the group (header button or group info), anyone can leave; the sender's name is shown on each message. When the last admin leaves, another member becomes admin.
 - **Offline reading**: the conversation list and the latest messages of each conversation are cached on the phone (Room) and shown instantly, then refreshed from the server.
 - **Search** tab: full-text search of users by name or e-mail (results ranked by relevance). **People** tab: add and remove friends.
 - Material 3 design with light and dark themes.
@@ -126,7 +126,7 @@ Routes are `POST` with a JSON body (or form body) and answer with JSON; a failur
 | `/me/avatar` | `attachment` (an uploaded image) or `null` | `avatar` |
 | `/groups/create` | `name`, `members` (user ids) | `groupID` |
 | `/groups/info`, `/groups/messages` | `groupID` (+ paging for messages) | `group` with members and roles / `messages` |
-| `/groups/rename`, `/groups/add`, `/groups/remove` | `groupID` + `name` / `userID` | any member can add; only admins rename or remove others; anyone may remove themselves to leave |
+| `/groups/rename`, `/groups/add`, `/groups/remove` | `groupID` + `name` / `userID` | admins only; anyone may remove themselves to leave |
 
 ## Real time (Socket.IO)
 

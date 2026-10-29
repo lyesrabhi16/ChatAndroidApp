@@ -293,7 +293,6 @@ public class ChatFragment extends AppCompatActivity {
                 startActivity(account);
             }
         });
-        b.buttonAddMember.setVisibility(isGroup ? View.VISIBLE : View.GONE);
         b.buttonAddMember.setOnClickListener(v -> {
             Intent add = new Intent(this, GroupCreateActivity.class);
             add.putExtra("groupID", groupID);
@@ -392,6 +391,9 @@ public class ChatFragment extends AppCompatActivity {
                         if (m != null) memberNames.put(m.optInt("userID"), m.optString("userName"));
                     }
                     memberCount = members.length();
+                    // adding people is for admins (the server enforces it too)
+                    boolean admin = "admin".equals(group.optString("me"));
+                    b.buttonAddMember.setVisibility(admin ? View.VISIBLE : View.GONE);
                     updateStatus();
                 }
 
