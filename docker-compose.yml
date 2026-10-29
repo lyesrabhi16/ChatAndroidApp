@@ -1,0 +1,32 @@
+# MySQL (with the sample database) + the chat server.
+#   docker compose up --build
+# The Android app then talks to http://<your computer's LAN IP>:8001 (HTTP API) and :8000 (Socket.IO).
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: chat-demo-root
+      MYSQL_DATABASE: ChatDB
+    volumes:
+      - ./chatdb.sql:/docker-entrypoint-initdb.d/chatdb.sql:ro   # imported on first start only
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pchat-demo-root"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  server:
+    build: .
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: chat-demo-root
+      DB_NAME: ChatDB
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8001:8001"   # HTTP API
+      - "8000:8000"   # Socket.IO
+volumes:
+  db-data:
