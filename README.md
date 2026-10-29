@@ -20,7 +20,7 @@ Node.js server (Express, Socket.IO, Argon2) ──► MySQL 8 (users, friends, m
 
 ## Screenshots
 
-The app running on an Android emulator against the server from this repository.
+The app running on an Android emulator against the server from this repository. The design follows Material 3, with a light and a dark theme.
 
 | Sign in | Sign up | Chats |
 | :---: | :---: | :---: |
@@ -29,6 +29,10 @@ The app running on an Android emulator against the server from this repository.
 | Search | Profile | Conversation |
 | :---: | :---: | :---: |
 | <img src="docs/screenshots/search.png" width="240"> | <img src="docs/screenshots/profile.png" width="240"> | <img src="docs/screenshots/conversation.png" width="240"> |
+
+| Chats (dark) | Conversation (dark) |
+| :---: | :---: |
+| <img src="docs/screenshots/chats-dark.png" width="240"> | <img src="docs/screenshots/conversation-dark.png" width="240"> |
 
 ## Quick start (server and database)
 
