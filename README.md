@@ -1,6 +1,6 @@
 # ChatApp: Android chat with a Node.js server
 
-A real-time messaging app: an **Android client (Java)** talking to a **Node.js server** (Express + Socket.IO) backed by **MySQL**. Sign up, find people, add friends, chat one-to-one or in groups, and send photos, voice messages and files; everything is delivered instantly and stored in the database.
+A real-time messaging app: an **Android client (Java)** talking to a **Node.js server** (Express + Socket.IO) backed by **MySQL**. Sign up, find people, add friends, chat one-to-one or in groups, and send photos, voice messages and files. Everything is delivered instantly and stored in the database.
 
 ```
 Android app (Java, Volley, Socket.IO client, Room cache)
@@ -13,15 +13,15 @@ Node.js server (Express, Socket.IO, Argon2) ──► MySQL 8 (users, friends, m
 
 ## Features
 
-- **Accounts**: sign up and sign in; the session is kept on the phone until you log out or it expires. Passwords are stored as Argon2 hashes, and the server issues a signed token (see *Authentication*). A profile picture can be set from the profile screen.
+- **Accounts**: sign up and sign in. The session is kept on the phone until you log out or it expires. Passwords are stored as Argon2 hashes, and the server issues a signed token (see *Authentication*). A profile picture can be set from the profile screen.
 - **Conversations** with people and **groups**, most recent first, with an **unread counter** and a green dot when the person is online.
 - **Messages**
-  - text, **photos** (shrunk and rotated upright before upload, full-screen viewer), **voice messages** and **files** (any type up to 15 MB, opened with the app of your choice);
-  - voice messages are recorded with a **live scrolling waveform** and shown as loudness bars that fill while they play;
-  - **replies** (the quoted message is shown in the bubble), **edit** and **delete** (your own messages, for everyone);
-  - **read receipts** (✓ sent, ✓✓ read), **"typing…"**, **online / last seen**;
+  - text, **photos** (shrunk and rotated upright before upload, full-screen viewer), **voice messages** and **files** (any type up to 15 MB, opened with the app of your choice).
+  - voice messages are recorded with a **live scrolling waveform** and shown as loudness bars that fill while they play.
+  - **replies** (the quoted message is shown in the bubble), **edit** and **delete** (your own messages, for everyone).
+  - **read receipts** (✓ sent, ✓✓ read), **"typing…"**, **online / last seen**.
   - history loads in pages of 30 as you scroll up.
-- **Groups**: create from your friends; admins add and remove members and rename the group (header button or group info), anyone can leave; the sender's name is shown on each message. When the last admin leaves, another member becomes admin.
+- **Groups**: create from your friends. Admins add and remove members and rename the group (header button or group info), anyone can leave. The sender's name is shown on each message. When the last admin leaves, another member becomes admin.
 - **Offline reading**: the conversation list and the latest messages of each conversation are cached on the phone (Room) and shown instantly, then refreshed from the server.
 - **Search** tab: full-text search of users by name or e-mail (results ranked by relevance). **People** tab: add and remove friends.
 - Material 3 design with light and dark themes.
@@ -46,7 +46,7 @@ The app running on two Android emulators against the server from this repository
 | :---: | :---: |
 | <img src="docs/screenshots/chats-dark.png" width="240"> | <img src="docs/screenshots/conversation-dark.png" width="240"> |
 
-The emulator's microphone is silent, so the recording screenshot shows the flat baseline; on a phone the bars follow your voice.
+The emulator's microphone is silent, so the recording screenshot shows the flat baseline. On a phone the bars follow your voice.
 
 ## Quick start (server and database)
 
@@ -95,18 +95,18 @@ The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. In Android St
 ## Authentication
 
 - `/signup` and `/signin` are public and return a **token** (a signed JWT, HS256, valid `TOKEN_LIFETIME`).
-- Every other route needs `Authorization: Bearer <token>`; without a valid one the answer is `401`. The Android app stores the token with the session and sends it on every request; if the server answers `401` the app signs the user out.
+- Every other route needs `Authorization: Bearer <token>`. Without a valid one the answer is `401`. The Android app stores the token with the session and sends it on every request. If the server answers `401` the app signs the user out.
 - The identity always comes from the token, never from an id in the request. You can only read your own friends and conversations, send messages as yourself, edit or delete your own messages, read a conversation you take part in, and download files from conversations you belong to (`403` / `404` otherwise).
 - Sign-in gives the same answer for an unknown e-mail and a wrong password, and is limited to 10 failed attempts per address and e-mail every 15 minutes (`429`).
 - Sign-up checks lengths against the database columns (name 1-20, e-mail 1-50) and requires a password of at least 6 characters.
 - Socket.IO connections are authenticated too (below).
-- **Uploads**: a file is uploaded first and then attached to a message by the random name the server returns. Only its uploader can attach it, and only once; the type must match (an image message needs a JPEG, PNG, WebP or GIF). Files are served with `nosniff`, a sandboxing `Content-Security-Policy` and `Content-Disposition: attachment` (except images and audio), so an uploaded HTML file can never run as a page.
+- **Uploads**: a file is uploaded first and then attached to a message by the random name the server returns. Only its uploader can attach it, and only once. The type must match (an image message needs a JPEG, PNG, WebP or GIF). Files are served with `nosniff`, a sandboxing `Content-Security-Policy` and `Content-Disposition: attachment` (except images and audio), so an uploaded HTML file can never run as a page.
 
-The app talks plain HTTP on the local network; put the server behind HTTPS before exposing it beyond that, because tokens and passwords travel in clear otherwise.
+The app talks plain HTTP on the local network. Put the server behind HTTPS before exposing it beyond that, because tokens and passwords travel in clear otherwise.
 
 ## HTTP API
 
-Routes are `POST` with a JSON body (or form body) and answer with JSON; a failure is `{"error": "..."}`. Message objects look like `{messageID, sender, receiver, groupID, type, content, attachment, fileName, fileSize, duration, waveform, replyTo, reply, edited, deleted, readAt, date, senderName}`.
+Routes are `POST` with a JSON body (or form body) and answer with JSON. A failure is `{"error": "..."}`. Message objects look like `{messageID, sender, receiver, groupID, type, content, attachment, fileName, fileSize, duration, waveform, replyTo, reply, edited, deleted, readAt, date, senderName}`.
 
 | Route | Body | Returns |
 | --- | --- | --- |
@@ -118,7 +118,7 @@ Routes are `POST` with a JSON body (or form body) and answer with JSON; a failur
 | `/friends/add`, `/friends/remove` | `userID1`, `userID2` | the database result (`affectedRows` is `1` on success) |
 | `/conversations` | | `conversations`: people and groups, most recent first, with `preview`, `unread`, `online` |
 | `/messages` | `userID1`, `userID2`, optional `limit` (30, max 100) and `before` (a `messageID`) | `messages` (oldest first), `hasMore` |
-| `/messages/send` | `receiver` or `groupID`; `type` (`text`, `image`, `audio`, `file`); `content`; `attachment`; `duration`, `waveform` (voice); `replyTo` | `messageID`, `message` |
+| `/messages/send` | `receiver` or `groupID`, `type` (`text`, `image`, `audio`, `file`), `content`, `attachment`, `duration`, `waveform` (voice), `replyTo` | `messageID`, `message` |
 | `/messages/edit`, `/messages/delete` | `messageID` (+ `content`) | `message` |
 | `/messages/read` | `userID` or `groupID` | how many messages were marked read |
 | `/upload?name=<file name>` | the file as the raw body, with its `Content-Type` (15 MB max) | `attachment` |
@@ -126,12 +126,12 @@ Routes are `POST` with a JSON body (or form body) and answer with JSON; a failur
 | `/me/avatar` | `attachment` (an uploaded image) or `null` | `avatar` |
 | `/groups/create` | `name`, `members` (user ids) | `groupID` |
 | `/groups/info`, `/groups/messages` | `groupID` (+ paging for messages) | `group` with members and roles / `messages` |
-| `/groups/rename`, `/groups/add`, `/groups/remove` | `groupID` + `name` / `userID` | admins only; anyone may remove themselves to leave |
+| `/groups/rename`, `/groups/add`, `/groups/remove` | `groupID` + `name` / `userID` | admins only, anyone may remove themselves to leave |
 
 ## Real time (Socket.IO)
 
-1. The client connects with its token in the handshake (`auth: {token}`; `?token=` also works). Without a valid token the connection is refused with `authentication required`.
-2. Messages can be sent over the socket (`chat message`, a JSON string with the same fields as `/messages/send`) or with `/messages/send`; the server saves the message, then emits it as `chat message` to every connected device of the sender and the receiver (or of every group member).
+1. The client connects with its token in the handshake (`auth: {token}`, `?token=` also works). Without a valid token the connection is refused with `authentication required`.
+2. Messages can be sent over the socket (`chat message`, a JSON string with the same fields as `/messages/send`) or with `/messages/send`. The server saves the message, then emits it as `chat message` to every connected device of the sender and the receiver (or of every group member).
 3. Other events from the server: `message updated` (edit / delete), `messages read` (`{by, ids}`), `typing` (`{from, groupID, typing}`), `presence` (`{userID, online, lastSeen}`, sent to friends, people you talk to and group mates), `group updated` (`{groupID, removed}`).
 4. From the client: `typing` (`{to}` or `{groupID}`, `typing: true | false`).
 
